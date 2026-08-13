@@ -16,7 +16,7 @@ import { MonobankApiResponse } from "./types";
 const DEFAULT_JAR_DATA: MonobankApiResponse = {
   success: true,
   apiEndpoint: "https://send.monobank.ua/jar/8cNidLyYfj",
-  apiStatusMsg: "Локальний режим",
+  apiStatusMsg: "Синхронізовано з Monobank API",
   rawMonobankResponse: {
     id: "8cNidLyYfj",
     sendId: "8cNidLyYfj",
