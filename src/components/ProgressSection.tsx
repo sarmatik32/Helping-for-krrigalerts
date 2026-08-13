@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "motion/react";
-import { RefreshCw, CheckCircle2, Shield, Activity, Edit3 } from "lucide-react";
+import { RefreshCw, ExternalLink } from "lucide-react";
 import { ParsedMonobankData, RawMonobankResponse } from "../types";
 
 interface ProgressSectionProps {
@@ -78,9 +78,15 @@ export const ProgressSection: React.FC<ProgressSectionProps> = ({
               </span>
             </div>
           </div>
-          <span className="text-xs text-slate-400 font-semibold mt-2.5 font-mono">
-            Статус банки Монобанк
-          </span>
+          <a
+            href={parsed.jarUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-sky-500 via-cyan-400 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-slate-950 font-black text-xs uppercase tracking-wider text-center flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(56,189,248,0.4)] hover:shadow-[0_0_25px_rgba(56,189,248,0.7)] transition-all transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
+          >
+            <ExternalLink className="w-3.5 h-3.5 stroke-[2.5]" />
+            <span>Долучитись</span>
+          </a>
         </div>
 
         {/* Financial Numbers */}
