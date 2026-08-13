@@ -1,0 +1,6 @@
+{
+  "name": "Збір на Детектор Дронів",
+  "description": "Універсальна сторінка збору коштів з інтеграцією Monobank API на портативний детектор дронів для розвідки (Кривий Ріг Alert).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
