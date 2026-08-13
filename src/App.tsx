@@ -13,9 +13,65 @@ import { Footer } from "./components/Footer";
 import { DroneBackgroundAnimation } from "./components/DroneBackgroundAnimation";
 import { MonobankApiResponse } from "./types";
 
+const DEFAULT_JAR_DATA: MonobankApiResponse = {
+  success: true,
+  apiEndpoint: "https://send.monobank.ua/jar/8cNidLyYfj",
+  apiStatusMsg: "Локальний режим",
+  rawMonobankResponse: {
+    id: "8cNidLyYfj",
+    sendId: "8cNidLyYfj",
+    title: "Збір на 10 комплектів РЕБ для розвідників 129 ОБр ТрО",
+    description: `Друзі, звертаємося до кожного з вас.
+Наш побратим спільноти зараз виконує бойові завдання у складі розвідроти на Слов’янському напрямку. Для безпеки, вчасного виявлення ворожих «пташок» та збереження життя терміново потрібен портативний детектор дронів (засіб РЕР).
+
+🎯 Мета збору: придбати якісний аналізатор частот («Щезник 4М», «Чуйка», «Хантер 3» або аналог) — залежно від зібраної суми.
+⚡️ Від себе: команда адмінів уже вклала перші кошти, щоб запустити збір.
+
+Якщо ви не маєте змоги підтримати гривнею — дуже просимо про максимальний розголос та репост. Кожна гривня та кожен вашій пошир — це реальний шанс захистити розвідників на передку. Разом до перемоги! 🇺🇦`,
+    currencyCode: 980,
+    balance: 1000,
+    goal: 4500000,
+    ownerName: "Сергій К. (Кривий Ріг Оповіщення / АЛЕРТС)",
+    updatedAt: new Date().toISOString(),
+  },
+  parsed: {
+    jarUrl: "https://send.monobank.ua/jar/8cNidLyYfj",
+    title: "Збір на 10 комплектів РЕБ для розвідників 129 ОБр ТрО",
+    description: `Друзі, звертаємося до кожного з вас.
+Наш побратим спільноти зараз виконує бойові завдання у складі розвідроти на Слов’янському напрямку. Для безпеки, вчасного виявлення ворожих «пташок» та збереження життя терміново потрібен портативний детектор дронів (засіб РЕР).
+
+🎯 Мета збору: придбати якісний аналізатор частот («Щезник 4М», «Чуйка», «Хантер 3» або аналог) — залежно від зібраної суми.
+⚡️ Від себе: команда адмінів уже вклала перші кошти, щоб запустити збір.
+
+Якщо ви не маєте змоги підтримати гривнею — дуже просимо про максимальний розголос та репост. Кожна гривня та кожен вашій пошир — це реальний шанс захистити розвідників на передку. Разом до перемоги! 🇺🇦`,
+    balanceUah: 10,
+    goalUah: 45000,
+    currency: "UAH",
+    percentage: 0,
+    remainingUah: 44990,
+    logoUrl: "/logo.png",
+  },
+  donations: [],
+};
+
+const getInitialData = (): MonobankApiResponse => {
+  try {
+    const localSaved = localStorage.getItem("mono_jar_local_data");
+    if (localSaved) {
+      const parsedData = JSON.parse(localSaved);
+      if (parsedData && parsedData.parsed) {
+        return parsedData;
+      }
+    }
+  } catch (e) {
+    console.warn("Could not load local storage data:", e);
+  }
+  return DEFAULT_JAR_DATA;
+};
+
 export default function App() {
-  const [monoApiResponse, setMonoApiResponse] = useState<MonobankApiResponse | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [monoApiResponse, setMonoApiResponse] = useState<MonobankApiResponse>(getInitialData);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [isShareOpen, setIsShareOpen] = useState<boolean>(false);
   const [isAdminOpen, setIsAdminOpen] = useState<boolean>(false);
@@ -26,12 +82,15 @@ export default function App() {
       const res = await fetch("/api/mono/jar-info");
       if (res.ok) {
         const result: MonobankApiResponse = await res.json();
-        if (result.success) {
+        if (result && result.parsed) {
           setMonoApiResponse(result);
+          try {
+            localStorage.setItem("mono_jar_local_data", JSON.stringify(result));
+          } catch (e) {}
         }
       }
     } catch (err) {
-      console.error("Error fetching Monobank Jar API data:", err);
+      // Quiet fallback for static hosts without backend API
     } finally {
       setIsLoading(false);
     }
@@ -56,10 +115,44 @@ export default function App() {
       });
       if (res.ok) {
         await fetchMonoJarData();
+        return;
       }
     } catch (err) {
-      console.error("Error updating Monobank config:", err);
+      console.warn("Server API not available for update, saving locally:", err);
     }
+
+    // Local state fallback for admin editing on static deployments
+    const newBalanceUah = Number(updatedFields.balanceUah) || monoApiResponse.parsed.balanceUah;
+    const newGoalUah = Number(updatedFields.goalUah) || monoApiResponse.parsed.goalUah;
+    const newRemaining = Math.max(0, newGoalUah - newBalanceUah);
+    const newPct = newGoalUah > 0 ? Math.min(100, Math.round((newBalanceUah / newGoalUah) * 100)) : 0;
+
+    const updatedResponse: MonobankApiResponse = {
+      ...monoApiResponse,
+      rawMonobankResponse: {
+        ...monoApiResponse.rawMonobankResponse,
+        title: updatedFields.title || monoApiResponse.rawMonobankResponse.title,
+        description: updatedFields.description || monoApiResponse.rawMonobankResponse.description,
+        balance: newBalanceUah * 100,
+        goal: newGoalUah * 100,
+      },
+      parsed: {
+        ...monoApiResponse.parsed,
+        jarUrl: updatedFields.jarUrl || monoApiResponse.parsed.jarUrl,
+        title: updatedFields.title || monoApiResponse.parsed.title,
+        description: updatedFields.description || monoApiResponse.parsed.description,
+        balanceUah: newBalanceUah,
+        goalUah: newGoalUah,
+        remainingUah: newRemaining,
+        percentage: newPct,
+        logoUrl: updatedFields.logoUrl !== undefined ? updatedFields.logoUrl : monoApiResponse.parsed.logoUrl,
+      },
+    };
+
+    setMonoApiResponse(updatedResponse);
+    try {
+      localStorage.setItem("mono_jar_local_data", JSON.stringify(updatedResponse));
+    } catch (e) {}
   };
 
   if (isLoading || !monoApiResponse) {
