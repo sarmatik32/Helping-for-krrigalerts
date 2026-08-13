@@ -1,7 +1,14 @@
 import express from "express";
 import path from "path";
 import fs from "fs";
+import crypto from "crypto";
 import { createServer as createViteServer } from "vite";
+
+// Valid SHA-256 hashes for admin passwords (never store plaintext passwords in code)
+const ALLOWED_PASSWORD_HASHES = [
+  "8c187b404079d8c94914a7b53984bbed8249992bd7b4b741f33284aafb8b69d6", // SHA-256 hash 1
+  "f2d1d9604cd4655a27d7852f8bd6b763f53423b1cab49223687a0423ab6e80c9", // SHA-256 hash 2
+];
 
 const app = express();
 const PORT = 3000;
@@ -28,7 +35,7 @@ let jarApiState = {
   balance: 3845000, // in kopecks (38,450.00 UAH)
   goal: 8500000,    // in kopecks (85,000.00 UAH)
   ownerName: "Сергій К. (Кривий Ріг Оповіщення / АЛЕРТС)",
-  monobankToken: "IuK_IXCutZiDcSLBr8d5X_IJbcAlkv714_PpNWfOxEZy0",
+  monobankToken: "",
   logoUrl: "/logo.png",
   updatedAt: new Date().toISOString()
 };
@@ -230,7 +237,11 @@ app.get("/api/mono/jar-info", async (req, res) => {
 app.post("/api/mono/jar-update", (req, res) => {
   const { adminPassword, jarId, jarUrl, title, description, balanceUah, goalUah, monobankToken, logoUrl } = req.body;
 
-  if (adminPassword !== "25510032") {
+  const inputHash = crypto.createHash("sha256").update(String(adminPassword || "")).digest("hex");
+  const envHash = process.env.ADMIN_PASSWORD_HASH;
+  const isHashValid = ALLOWED_PASSWORD_HASHES.includes(inputHash) || (envHash && inputHash === envHash);
+
+  if (!isHashValid) {
     return res.status(401).json({ success: false, message: "Невірний пароль адміністратора" });
   }
 

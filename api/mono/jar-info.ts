@@ -1,5 +1,5 @@
-const MONOBANK_TOKEN = "uK_IXCutZiDcSLBr8d5X_IJbcAlkv714_PpNWfOxEZy0";
-const JAR_SEND_ID = "8cNidLyYfj";
+const MONOBANK_TOKEN = process.env.MONOBANK_TOKEN || "";
+const JAR_SEND_ID = process.env.JAR_SEND_ID || "8cNidLyYfj";
 
 export default async function handler(req: any, res: any) {
   res.setHeader("Access-Control-Allow-Origin", "*");
