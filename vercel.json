@@ -2,12 +2,12 @@
   "version": 2,
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "/api/index"
+      "source": "/api/mono/jar-info",
+      "destination": "/api/jar-info"
     },
     {
-      "source": "/((?!api/).*)",
-      "destination": "/index.html"
+      "source": "/api/mono/jar-update",
+      "destination": "/api/jar-update"
     }
   ]
 }
