@@ -21,6 +21,20 @@ ${raw.description}
 
 Кожен репост та гривня — це реальний шанс захистити розвідників! 🇺🇦`;
 
+  // Concise text for Telegram to prevent HTTP 400 Bad Request error on t.me/share/url
+  const telegramText = `🇺🇦 ${raw.title}
+
+🎯 Зібрано: ${parsed.balanceUah.toLocaleString()} з ${parsed.goalUah.toLocaleString()} UAH (${parsed.percentage}%)
+💳 Поповнити Банку: ${parsed.jarUrl}`;
+
+  // Concise text for Twitter (X) to stay under 280 characters
+  const twitterText = `🇺🇦 ${raw.title.slice(0, 80)}...
+
+🎯 Ціль: ${parsed.goalUah.toLocaleString()} UAH (${parsed.percentage}%)
+💳 Поповнити Банку: ${parsed.jarUrl}
+
+#ПідтримкаЗСУ #Донат #Monobank`;
+
   const copyText = () => {
     try {
       navigator.clipboard.writeText(shareText);
@@ -36,13 +50,13 @@ ${raw.description}
     setTimeout(() => setToastMsg(null), 3500);
   };
 
-  // Telegram
+  // Telegram expects clean url + concise text
   const telegramShareUrl = `https://t.me/share/url?url=${encodeURIComponent(
     parsed.jarUrl
-  )}&text=${encodeURIComponent(shareText)}`;
+  )}&text=${encodeURIComponent(telegramText)}`;
 
-  // Twitter / X
-  const twitterShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
+  // Twitter / X expects concise text under 280 chars
+  const twitterShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(twitterText)}`;
 
   // Facebook sharer
   const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(

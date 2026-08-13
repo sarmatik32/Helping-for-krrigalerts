@@ -24,6 +24,18 @@ ${raw.description}
 
 Кожен репост та гривня — це реальний шанс захистити розвідників! 🇺🇦`;
 
+  const telegramText = `🇺🇦 ${raw.title}
+
+🎯 Зібрано: ${parsed.balanceUah.toLocaleString()} з ${parsed.goalUah.toLocaleString()} UAH (${parsed.percentage}%)
+💳 Поповнити Банку: ${parsed.jarUrl}`;
+
+  const twitterText = `🇺🇦 ${raw.title.slice(0, 80)}...
+
+🎯 Ціль: ${parsed.goalUah.toLocaleString()} UAH (${parsed.percentage}%)
+💳 Поповнити Банку: ${parsed.jarUrl}
+
+#ПідтримкаЗСУ #Донат #Monobank`;
+
   const copyShareText = () => {
     try {
       navigator.clipboard.writeText(shareText);
@@ -39,9 +51,9 @@ ${raw.description}
 
   const telegramShareUrl = `https://t.me/share/url?url=${encodeURIComponent(
     parsed.jarUrl
-  )}&text=${encodeURIComponent(shareText)}`;
+  )}&text=${encodeURIComponent(telegramText)}`;
 
-  const twitterShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
+  const twitterShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(twitterText)}`;
 
   const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
     parsed.jarUrl
