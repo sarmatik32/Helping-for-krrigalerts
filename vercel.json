@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/api/mono/jar-info",
+      "destination": "/api/jar-info"
+    },
+    {
+      "source": "/api/mono/jar-update",
+      "destination": "/api/jar-update"
+    }
+  ]
+}
