@@ -4,7 +4,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // Скопіюй сюди логіку з server.ts, яка робить запит до Monobank
-    const jarId = "ВАШ_ID_БАНКИ"; 
+    const jarId = "8cNidLyYfj"; 
     const response = await fetch(`https://api.monobank.ua/bank/jar/${jarId}`);
     const data = await response.json();
 
