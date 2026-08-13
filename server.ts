@@ -60,24 +60,13 @@ function saveConfig() {
   }
 }
 
-// Recent donations list
-let recentDonations = [
-  { id: "1", name: "Андрій М.", amount: 500, time: "2 хв тому", comment: "Разом до перемоги! 🇺🇦" },
-  { id: "2", name: "Олена К.", amount: 200, time: "5 хв тому", comment: "На захист хлопців" },
-  { id: "3", name: "Анонімний донатор", amount: 1000, time: "12 хв тому", comment: "Тримайтесь!" },
-  { id: "4", name: "Володимир П.", amount: 350, time: "18 хв тому", comment: "Слава Україні!" },
-  { id: "5", name: "Спільнота АЛЕРТС", amount: 5000, time: "25 хв тому", comment: "Внесок від адмінів" },
-  { id: "6", name: "Олексій С.", amount: 100, time: "30 хв тому", comment: "Кожна гривня важлива" },
-  { id: "7", name: "Сергій В.", amount: 2000, time: "45 хв тому", comment: "На детектор РЕР" },
-  { id: "8", name: "Марія Г.", amount: 150, time: "1 год тому", comment: "Божої опіки воїнам" },
-  { id: "9", name: "Анонімний донатор", amount: 500, time: "1 год тому", comment: "" },
-  { id: "10", name: "Дмитро Т.", amount: 300, time: "2 год тому", comment: "Захисникам Покровського напрямку" }
-];
+// Recent donations list (populated dynamically from Monobank API statement)
+let recentDonations: any[] = [];
 
 // API: Fetch Monobank Jar API Data
 app.get("/api/mono/jar-info", async (req, res) => {
   const { jarId, token } = req.query;
-  const targetToken = (token as string) || jarApiState.monobankToken;
+  const targetToken = (token as string) || process.env.MONOBANK_TOKEN || jarApiState.monobankToken;
   const activeJarId = (jarId as string) || jarApiState.id;
   let apiStatusMsg = "Використовуються збережені дані збору";
 

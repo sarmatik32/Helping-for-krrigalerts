@@ -178,21 +178,25 @@ export default function App() {
       {/* Ambient background glow */}
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] bg-gradient-to-b from-sky-950/20 via-blue-950/10 to-transparent pointer-events-none blur-3xl -z-10" />
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6">
         {/* Centered Logo Header */}
         <LogoHeader logoUrl={parsed.logoUrl} />
 
-        {/* Live Progress Section */}
-        <ProgressSection
-          parsed={parsed}
-          raw={rawMonobankResponse}
-          apiStatusMsg={monoApiResponse.apiStatusMsg}
-          onRefreshMono={handleRefreshMono}
-          onOpenEdit={() => setIsAdminOpen(true)}
-          isRefreshing={isRefreshing}
-        />
+        {/* Row of 2 balanced cards: ProgressSection ("Збір коштів активний") & DonationQuickPay ("Оплата в Банку Monobank") */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 my-6 items-stretch">
+          <ProgressSection
+            parsed={parsed}
+            raw={rawMonobankResponse}
+            apiStatusMsg={monoApiResponse.apiStatusMsg}
+            onRefreshMono={handleRefreshMono}
+            onOpenEdit={() => setIsAdminOpen(true)}
+            isRefreshing={isRefreshing}
+          />
 
-        {/* Ticker marquee right below the Jar progress block */}
+          <DonationQuickPay parsed={parsed} raw={rawMonobankResponse} />
+        </div>
+
+        {/* Ticker marquee right below the main funding cards */}
         <DonationTicker donations={donations} />
 
         {/* Jar Description Box */}
@@ -210,9 +214,6 @@ export default function App() {
             {parsed.description}
           </div>
         </section>
-
-        {/* Direct Payment & QR Code Card for Monobank Jar */}
-        <DonationQuickPay parsed={parsed} raw={rawMonobankResponse} />
 
         {/* Equipment Matrix (Блок з видами РЕБ / РЕР) */}
         <EquipmentMatrix />

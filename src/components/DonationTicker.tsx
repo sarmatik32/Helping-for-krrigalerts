@@ -9,13 +9,9 @@ interface DonationTickerProps {
 export const DonationTicker: React.FC<DonationTickerProps> = ({ donations = [] }) => {
   const [isListOpen, setIsListOpen] = useState(false);
 
-  if (!donations || donations.length === 0) return null;
-
-  // For CSS marquee animation translateX(-50%), we need exactly 2 identical sets
-  // so the scroll resets seamlessly without visual jumping.
-  const marqueeItems = [...donations, ...donations];
-
-  const totalSum = donations.reduce((acc, curr) => acc + curr.amount, 0);
+  const hasDonations = donations && donations.length > 0;
+  const totalSum = hasDonations ? donations.reduce((acc, curr) => acc + curr.amount, 0) : 0;
+  const marqueeItems = hasDonations ? [...donations, ...donations] : [];
 
   return (
     <>
@@ -25,49 +21,66 @@ export const DonationTicker: React.FC<DonationTickerProps> = ({ donations = [] }
         <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-[#070b14] to-transparent z-10 pointer-events-none" />
 
         <div className="flex items-center gap-3">
-          {/* Label Badge & Show List Button */}
+          {/* Label Badge */}
           <div className="shrink-0 flex items-center gap-2 pl-3 pr-2 py-1 bg-emerald-950/90 border border-emerald-700/60 rounded-r-xl text-emerald-400 font-mono text-xs font-bold z-20 shadow-md ml-1 sm:ml-4">
             <Zap className="w-3.5 h-3.5 fill-emerald-400 animate-pulse shrink-0" />
-            <span className="uppercase tracking-wider text-[11px] hidden sm:inline">Останні донати:</span>
-            <button
-              onClick={() => setIsListOpen(true)}
-              className="flex items-center gap-1 bg-emerald-900/80 hover:bg-emerald-800 text-emerald-200 border border-emerald-600/50 px-2 py-0.5 rounded-lg text-[11px] font-bold transition-all shadow-sm active:scale-95 cursor-pointer"
-              title="Переглянути повний список без повторів"
-            >
-              <ListFilter className="w-3 h-3 text-emerald-300" />
-              <span>Список ({donations.length})</span>
-            </button>
+            <span className="uppercase tracking-wider text-[11px] hidden sm:inline">
+              {hasDonations ? "Останні донати:" : "Офіційний збір:"}
+            </span>
+            {hasDonations && (
+              <button
+                onClick={() => setIsListOpen(true)}
+                className="flex items-center gap-1 bg-emerald-900/80 hover:bg-emerald-800 text-emerald-200 border border-emerald-600/50 px-2 py-0.5 rounded-lg text-[11px] font-bold transition-all shadow-sm active:scale-95 cursor-pointer"
+                title="Переглянути повний список без повторів"
+              >
+                <ListFilter className="w-3 h-3 text-emerald-300" />
+                <span>Список ({donations.length})</span>
+              </button>
+            )}
           </div>
 
           {/* Marquee Ticker Track */}
           <div className="flex overflow-hidden whitespace-nowrap w-full relative">
-            <div className="flex animate-marquee items-center gap-6 text-xs font-mono">
-              {marqueeItems.map((item, index) => (
-                <div
-                  key={`${item.id}-${index}`}
-                  className="inline-flex items-center gap-2 bg-slate-900/80 border border-slate-800/80 px-3 py-1.5 rounded-xl hover:border-slate-700 transition-colors shrink-0"
-                >
-                  <div className="flex items-center gap-1.5">
-                    <Heart className="w-3.5 h-3.5 text-rose-400 fill-rose-500/30" />
-                    <span className="font-bold text-slate-200">{item.name}</span>
-                  </div>
+            {hasDonations ? (
+              <div className="flex animate-marquee items-center gap-6 text-xs font-mono">
+                {marqueeItems.map((item, index) => (
+                  <div
+                    key={`${item.id}-${index}`}
+                    className="inline-flex items-center gap-2 bg-slate-900/80 border border-slate-800/80 px-3 py-1.5 rounded-xl hover:border-slate-700 transition-colors shrink-0"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <Heart className="w-3.5 h-3.5 text-rose-400 fill-rose-500/30" />
+                      <span className="font-bold text-slate-200">{item.name}</span>
+                    </div>
 
-                  <span className="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent font-extrabold font-mono">
-                    +{item.amount.toLocaleString()} ₴
-                  </span>
-
-                  <span className="text-[10px] text-slate-500 font-sans">
-                    ({item.time})
-                  </span>
-
-                  {item.comment && (
-                    <span className="text-[11px] text-slate-400 italic max-w-[150px] truncate border-l border-slate-800 pl-2">
-                      "{item.comment}"
+                    <span className="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent font-extrabold font-mono">
+                      +{item.amount.toLocaleString()} ₴
                     </span>
-                  )}
-                </div>
-              ))}
-            </div>
+
+                    <span className="text-[10px] text-slate-500 font-sans">
+                      ({item.time})
+                    </span>
+
+                    {item.comment && (
+                      <span className="text-[11px] text-slate-400 italic max-w-[150px] truncate border-l border-slate-800 pl-2">
+                        "{item.comment}"
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex items-center gap-6 text-xs font-mono text-slate-400 px-2">
+                <span className="flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4 text-emerald-400 inline" />
+                  Прямі зарахування на Монобанку
+                </span>
+                <span className="text-slate-600">•</span>
+                <span>Синхронізація донатів через Monobank API</span>
+                <span className="text-slate-600">•</span>
+                <span className="text-sky-300 font-semibold">Дякуємо кожному за підтримку та репости! 🇺🇦</span>
+              </div>
+            )}
           </div>
         </div>
       </div>

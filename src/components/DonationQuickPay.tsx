@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { ExternalLink, QrCode, Copy, Check, ShieldCheck, HeartHandshake } from "lucide-react";
+import { ExternalLink, QrCode, Copy, Check, HeartHandshake, CreditCard } from "lucide-react";
 import QRCode from "qrcode";
 import { ParsedMonobankData, RawMonobankResponse } from "../types";
 
@@ -9,12 +9,16 @@ interface DonationQuickPayProps {
   raw: RawMonobankResponse;
 }
 
-export const DonationQuickPay: React.FC<DonationQuickPayProps> = ({ parsed, raw }) => {
+const CARD_NUMBER = "4874 1000 3205 4507";
+const CARD_NUMBER_RAW = "4874100032054507";
+
+export const DonationQuickPay: React.FC<DonationQuickPayProps> = ({ parsed }) => {
   const [selectedAmount, setSelectedAmount] = useState<number>(200);
   const [customAmount, setCustomAmount] = useState<string>("200");
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
   const [showQrModal, setShowQrModal] = useState<boolean>(false);
   const [copiedLink, setCopiedLink] = useState<boolean>(false);
+  const [copiedCard, setCopiedCard] = useState<boolean>(false);
 
   const activeAmount = Number(customAmount) > 0 ? Number(customAmount) : selectedAmount;
 
@@ -52,98 +56,145 @@ export const DonationQuickPay: React.FC<DonationQuickPayProps> = ({ parsed, raw 
     setTimeout(() => setCopiedLink(false), 2000);
   };
 
+  const copyCardNumber = () => {
+    navigator.clipboard.writeText(CARD_NUMBER_RAW);
+    setCopiedCard(true);
+    setTimeout(() => setCopiedCard(false), 2000);
+  };
+
   return (
-    <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 sm:p-7 shadow-xl backdrop-blur-md relative my-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b border-slate-800">
-        <div>
-          <div className="flex items-center gap-2">
-            <HeartHandshake className="w-5 h-5 text-cyan-400" />
-            <h2 className="text-xl font-bold text-white tracking-tight">
-              Оплата в Банку Monobank
-            </h2>
+    <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xl backdrop-blur-md relative flex flex-col justify-between h-full">
+      {/* Background ambient glow */}
+      <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+
+      <div>
+        {/* Header */}
+        <div className="flex items-center justify-between gap-3 pb-4 border-b border-slate-800">
+          <div>
+            <div className="flex items-center gap-2">
+              <HeartHandshake className="w-5 h-5 text-cyan-400 shrink-0" />
+              <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight">
+                Оплата в Банку Monobank
+              </h2>
+            </div>
+            <p className="text-xs text-slate-400 mt-1">
+              Швидкий переказ через Банку або поповнення картки
+            </p>
           </div>
-          <p className="text-xs text-slate-400 mt-1">
-            Пряме посилання на банк збора: <code className="text-cyan-300 font-mono">{parsed.jarUrl}</code>
-          </p>
+
+          <button
+            onClick={() => setShowQrModal(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-sky-300 text-xs font-semibold border border-slate-700 transition-colors shrink-0 cursor-pointer"
+            title="Показати QR-код"
+          >
+            <QrCode className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="hidden sm:inline">QR-код</span>
+          </button>
         </div>
 
-        <button
-          onClick={() => setShowQrModal(true)}
-          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-sky-300 text-xs font-semibold border border-slate-700 transition-colors"
-        >
-          <QrCode className="w-4 h-4 text-cyan-400" />
-          <span>QR-код для банку</span>
-        </button>
+        {/* Card Number Copy Section */}
+        <div className="mt-4 p-3.5 bg-slate-950/90 border border-slate-800 rounded-xl flex items-center justify-between gap-3 shadow-inner">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="p-2.5 rounded-lg bg-sky-500/10 border border-sky-500/20 text-sky-400 shrink-0">
+              <CreditCard className="w-5 h-5" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wider font-semibold">
+                Номер карти для переказу:
+              </div>
+              <div className="text-base sm:text-lg font-black tracking-wider text-white font-mono truncate">
+                {CARD_NUMBER}
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={copyCardNumber}
+            className="py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-sky-300 hover:text-white font-bold text-xs flex items-center gap-1.5 border border-slate-700 transition-colors shrink-0 cursor-pointer"
+          >
+            {copiedCard ? (
+              <>
+                <Check className="w-4 h-4 text-emerald-400" />
+                <span className="text-emerald-400 font-mono">Скопійовано</span>
+              </>
+            ) : (
+              <>
+                <Copy className="w-4 h-4" />
+                <span className="hidden sm:inline font-mono">Скопіювати</span>
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Preset Amount Selector */}
+        <div className="mt-4">
+          <label className="text-[11px] font-bold uppercase tracking-wider text-slate-300 block mb-2 font-mono">
+            Оберіть або введіть суму (UAH):
+          </label>
+
+          <div className="grid grid-cols-3 gap-2">
+            {[100, 200, 500, 1000, 2000, 5000].map((preset) => {
+              const isSelected = selectedAmount === preset && Number(customAmount) === preset;
+              return (
+                <button
+                  key={preset}
+                  type="button"
+                  onClick={() => {
+                    setSelectedAmount(preset);
+                    setCustomAmount(preset.toString());
+                  }}
+                  className={`py-2 px-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 border text-center cursor-pointer ${
+                    isSelected
+                      ? "bg-gradient-to-r from-sky-500 to-cyan-500 text-slate-950 border-cyan-300 shadow-[0_0_12px_rgba(0,210,255,0.4)] font-black"
+                      : "bg-slate-950 hover:bg-slate-800 text-slate-200 border-slate-800 hover:border-slate-700"
+                  }`}
+                >
+                  +{preset.toLocaleString()} ₴
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Custom Input */}
+          <div className="mt-2.5 relative">
+            <input
+              type="text"
+              value={customAmount}
+              onChange={(e) => {
+                const val = e.target.value.replace(/\D/g, "");
+                setCustomAmount(val);
+                setSelectedAmount(Number(val));
+              }}
+              placeholder="Своя сума..."
+              className="w-full bg-slate-950 border border-slate-800 focus:border-sky-500 rounded-xl px-3.5 py-2.5 text-white font-bold text-base focus:outline-none transition-colors pr-14 font-mono"
+            />
+            <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs font-mono">
+              UAH
+            </span>
+          </div>
+        </div>
       </div>
 
-      {/* Preset Amount Selector */}
-      <div className="mt-5">
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-300 block mb-2.5 font-mono">
-          Оберіть суму для поповнення Банки (UAH):
-        </label>
-
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2.5">
-          {[100, 200, 500, 1000, 2000, 5000].map((preset) => {
-            const isSelected = selectedAmount === preset && Number(customAmount) === preset;
-            return (
-              <button
-                key={preset}
-                type="button"
-                onClick={() => {
-                  setSelectedAmount(preset);
-                  setCustomAmount(preset.toString());
-                }}
-                className={`py-2.5 px-3 rounded-xl font-bold text-sm sm:text-base transition-all duration-200 border text-center ${
-                  isSelected
-                    ? "bg-gradient-to-r from-sky-500 to-cyan-500 text-slate-950 border-cyan-300 shadow-[0_0_15px_rgba(0,210,255,0.4)] scale-105"
-                    : "bg-slate-950 hover:bg-slate-800 text-slate-200 border-slate-800 hover:border-slate-700"
-                }`}
-              >
-                +{preset.toLocaleString()} ₴
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Custom Input */}
-        <div className="mt-3 relative">
-          <input
-            type="text"
-            value={customAmount}
-            onChange={(e) => {
-              const val = e.target.value.replace(/\D/g, "");
-              setCustomAmount(val);
-              setSelectedAmount(Number(val));
-            }}
-            placeholder="Введіть довільну суму..."
-            className="w-full bg-slate-950 border border-slate-800 focus:border-sky-500 rounded-xl px-4 py-3 text-white font-bold text-lg focus:outline-none transition-colors pr-16 font-mono"
-          />
-          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm font-mono">
-            UAH (грн)
-          </span>
-        </div>
-      </div>
-
-      {/* Primary Action Button */}
-      <div className="mt-6 flex flex-col sm:flex-row gap-3">
+      {/* Primary Action Buttons */}
+      <div className="mt-5 flex flex-col gap-2.5">
         <a
           href={activeJarUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex-1 inline-flex items-center justify-center gap-2.5 py-4 px-6 rounded-xl bg-gradient-to-r from-cyan-500 via-sky-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-base shadow-[0_0_20px_rgba(0,210,255,0.4)] hover:shadow-[0_0_30px_rgba(0,210,255,0.6)] transition-all transform hover:-translate-y-0.5"
+          className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl bg-gradient-to-r from-cyan-500 via-sky-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-sm shadow-[0_0_18px_rgba(0,210,255,0.4)] hover:shadow-[0_0_25px_rgba(0,210,255,0.6)] transition-all transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
         >
-          <span>Поповнити Банку Mono ({activeAmount > 0 ? `${activeAmount.toLocaleString()} грн` : ''})</span>
-          <ExternalLink className="w-5 h-5 stroke-[2.5]" />
+          <span>Поповнити Банку ({activeAmount > 0 ? `${activeAmount.toLocaleString()} грн` : ''})</span>
+          <ExternalLink className="w-4 h-4 stroke-[2.5]" />
         </a>
 
         <button
           onClick={copyJarLink}
-          className="py-4 px-5 rounded-xl bg-slate-800 hover:bg-slate-700 text-sky-300 font-bold text-xs flex items-center justify-center gap-2 border border-slate-700 transition-colors"
+          className="w-full py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-sky-300 hover:text-white font-bold text-xs flex items-center justify-center gap-2 border border-slate-700 transition-colors cursor-pointer"
         >
           {copiedLink ? (
             <>
               <Check className="w-4 h-4 text-emerald-400" />
-              <span className="text-emerald-400">Скопійовано!</span>
+              <span className="text-emerald-400">Посилання на Банку скопійовано!</span>
             </>
           ) : (
             <>
@@ -204,3 +255,4 @@ export const DonationQuickPay: React.FC<DonationQuickPayProps> = ({ parsed, raw 
     </div>
   );
 };
+
