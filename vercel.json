@@ -8,6 +8,10 @@
     {
       "source": "/api/mono/jar-update",
       "destination": "/api/jar-update"
+    },
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
     }
   ]
 }
