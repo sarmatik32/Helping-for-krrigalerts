@@ -11,6 +11,8 @@ export const SocialShareSection: React.FC<SocialShareSectionProps> = ({ parsed, 
   const [copied, setCopied] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
+  const OFFICIAL_SITE_URL = "https://hepling.krrigalerts.pp.ua/";
+
   const shareText = `${raw.title}
 
 ${raw.description}
@@ -18,20 +20,30 @@ ${raw.description}
 🎯 Ціль: ${parsed.goalUah.toLocaleString()} UAH
 💰 Зібрано: ${parsed.balanceUah.toLocaleString()} UAH (${parsed.percentage}%)
 💳 Поповнити Банку Mono: ${parsed.jarUrl}
+🌐 Офіційний сайт збору: ${OFFICIAL_SITE_URL}
 
 Кожен репост та гривня — це реальний шанс захистити розвідників! 🇺🇦`;
+
+  // Concise text for Viber to fit within mobile URI scheme limits and include both links
+  const viberText = `🇺🇦 ${raw.title}
+
+🎯 Зібрано: ${parsed.balanceUah.toLocaleString()} з ${parsed.goalUah.toLocaleString()} UAH (${parsed.percentage}%)
+💳 Поповнити Банку: ${parsed.jarUrl}
+🌐 Офіційний сайт збору: ${OFFICIAL_SITE_URL}`;
 
   // Concise text for Telegram to prevent HTTP 400 Bad Request error on t.me/share/url
   const telegramText = `🇺🇦 ${raw.title}
 
 🎯 Зібрано: ${parsed.balanceUah.toLocaleString()} з ${parsed.goalUah.toLocaleString()} UAH (${parsed.percentage}%)
-💳 Поповнити Банку: ${parsed.jarUrl}`;
+💳 Поповнити Банку: ${parsed.jarUrl}
+🌐 Офіційний сайт збору: ${OFFICIAL_SITE_URL}`;
 
   // Concise text for Twitter (X) to stay under 280 characters
-  const twitterText = `🇺🇦 ${raw.title.slice(0, 80)}...
+  const twitterText = `🇺🇦 ${raw.title.slice(0, 60)}...
 
 🎯 Ціль: ${parsed.goalUah.toLocaleString()} UAH (${parsed.percentage}%)
 💳 Поповнити Банку: ${parsed.jarUrl}
+🌐 Офіційний сайт: ${OFFICIAL_SITE_URL}
 
 #ПідтримкаЗСУ #Донат #Monobank`;
 
@@ -63,11 +75,14 @@ ${raw.description}
     parsed.jarUrl
   )}`;
 
-  // Viber deep link
-  const viberShareUrl = `viber://forward?text=${encodeURIComponent(shareText)}`;
+  // Viber deep link using concise text with both links
+  const viberShareUrl = `viber://forward?text=${encodeURIComponent(viberText)}`;
 
-  const handlePlatformClick = (platform: "telegram" | "viber" | "facebook" | "twitter", e: React.MouseEvent<HTMLAnchorElement>) => {
-    // Copy text to clipboard so user can paste anywhere if needed
+  // WhatsApp share URL
+  const whatsappShareUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(viberText)}`;
+
+  const handlePlatformClick = (platform: "telegram" | "viber" | "whatsapp" | "facebook" | "twitter", e: React.MouseEvent<HTMLAnchorElement>) => {
+    // Copy full text to clipboard so user can paste anywhere if needed
     try {
       navigator.clipboard.writeText(shareText);
     } catch (err) {
@@ -76,16 +91,20 @@ ${raw.description}
 
     if (platform === "telegram") {
       showNotice("Готовий текст скопійовано в буфер! Відкриваємо Telegram...");
+    } else if (platform === "whatsapp") {
+      showNotice("Текст з посиланнями скопійовано! Відкриваємо WhatsApp...");
     } else if (platform === "facebook") {
       showNotice("Текст збору скопійовано у буфер! Вставте його у ваш допис на Facebook.");
     } else if (platform === "twitter") {
       showNotice("Текст скопійовано! Відкриваємо X (Twitter)...");
     } else if (platform === "viber") {
-      showNotice("Текст скопійовано! Якщо Viber не відкрився, вставте текст вручну.");
-      // On desktop browsers, custom protocol viber:// might fail, so we also provide fallback window open or clipboard copy
+      showNotice("Текст з посиланнями скопійовано! Відкриваємо Viber...");
       if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
         e.preventDefault();
-        window.open(`https://www.viber.com/`, "_blank", "noopener,noreferrer");
+        window.open(`viber://forward?text=${encodeURIComponent(viberText)}`, "_self");
+        setTimeout(() => {
+          window.open(`https://www.viber.com/`, "_blank", "noopener,noreferrer");
+        }, 800);
       }
     }
   };
@@ -140,13 +159,13 @@ ${raw.description}
         </div>
       )}
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         <a
           href={telegramShareUrl}
           target="_blank"
           rel="noopener noreferrer"
           onClick={(e) => handlePlatformClick("telegram", e)}
-          className="py-3 px-4 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md transform hover:-translate-y-0.5 cursor-pointer"
+          className="py-3 px-3 sm:px-4 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md transform hover:-translate-y-0.5 cursor-pointer"
         >
           <Send className="w-4 h-4" />
           <span>Telegram</span>
@@ -157,10 +176,21 @@ ${raw.description}
           target="_blank"
           rel="noopener noreferrer"
           onClick={(e) => handlePlatformClick("viber", e)}
-          className="py-3 px-4 rounded-xl bg-purple-700 hover:bg-purple-600 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md transform hover:-translate-y-0.5 cursor-pointer"
+          className="py-3 px-3 sm:px-4 rounded-xl bg-purple-700 hover:bg-purple-600 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md transform hover:-translate-y-0.5 cursor-pointer"
         >
           <MessageCircle className="w-4 h-4" />
           <span>Viber</span>
+        </a>
+
+        <a
+          href={whatsappShareUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => handlePlatformClick("whatsapp", e)}
+          className="py-3 px-3 sm:px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md transform hover:-translate-y-0.5 cursor-pointer"
+        >
+          <MessageCircle className="w-4 h-4" />
+          <span>WhatsApp</span>
         </a>
 
         <a
@@ -168,7 +198,7 @@ ${raw.description}
           target="_blank"
           rel="noopener noreferrer"
           onClick={(e) => handlePlatformClick("facebook", e)}
-          className="py-3 px-4 rounded-xl bg-blue-700 hover:bg-blue-600 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md transform hover:-translate-y-0.5 cursor-pointer"
+          className="py-3 px-3 sm:px-4 rounded-xl bg-blue-700 hover:bg-blue-600 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md transform hover:-translate-y-0.5 cursor-pointer"
         >
           <Facebook className="w-4 h-4" />
           <span>Facebook</span>
@@ -179,7 +209,7 @@ ${raw.description}
           target="_blank"
           rel="noopener noreferrer"
           onClick={(e) => handlePlatformClick("twitter", e)}
-          className="py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all border border-slate-700 shadow-md transform hover:-translate-y-0.5 cursor-pointer"
+          className="py-3 px-3 sm:px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all border border-slate-700 shadow-md transform hover:-translate-y-0.5 cursor-pointer"
         >
           <Twitter className="w-4 h-4 text-cyan-400" />
           <span>X / Twitter</span>

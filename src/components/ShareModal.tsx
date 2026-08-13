@@ -14,6 +14,8 @@ export const ShareModal: React.FC<ShareModalProps> = ({ parsed, raw, isOpen, onC
   const [copied, setCopied] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
+  const OFFICIAL_SITE_URL = "https://hepling.krrigalerts.pp.ua/";
+
   const shareText = `${raw.title}
 
 ${raw.description}
@@ -21,18 +23,27 @@ ${raw.description}
 🎯 Ціль: ${parsed.goalUah.toLocaleString()} UAH
 💰 Зібрано: ${parsed.balanceUah.toLocaleString()} UAH (${parsed.percentage}%)
 💳 Поповнити Банку Mono: ${parsed.jarUrl}
+🌐 Офіційний сайт збору: ${OFFICIAL_SITE_URL}
 
 Кожен репост та гривня — це реальний шанс захистити розвідників! 🇺🇦`;
+
+  const viberText = `🇺🇦 ${raw.title}
+
+🎯 Зібрано: ${parsed.balanceUah.toLocaleString()} з ${parsed.goalUah.toLocaleString()} UAH (${parsed.percentage}%)
+💳 Поповнити Банку: ${parsed.jarUrl}
+🌐 Офіційний сайт збору: ${OFFICIAL_SITE_URL}`;
 
   const telegramText = `🇺🇦 ${raw.title}
 
 🎯 Зібрано: ${parsed.balanceUah.toLocaleString()} з ${parsed.goalUah.toLocaleString()} UAH (${parsed.percentage}%)
-💳 Поповнити Банку: ${parsed.jarUrl}`;
+💳 Поповнити Банку: ${parsed.jarUrl}
+🌐 Офіційний сайт збору: ${OFFICIAL_SITE_URL}`;
 
-  const twitterText = `🇺🇦 ${raw.title.slice(0, 80)}...
+  const twitterText = `🇺🇦 ${raw.title.slice(0, 60)}...
 
 🎯 Ціль: ${parsed.goalUah.toLocaleString()} UAH (${parsed.percentage}%)
 💳 Поповнити Банку: ${parsed.jarUrl}
+🌐 Офіційний сайт: ${OFFICIAL_SITE_URL}
 
 #ПідтримкаЗСУ #Донат #Monobank`;
 
@@ -59,24 +70,31 @@ ${raw.description}
     parsed.jarUrl
   )}`;
 
-  const viberShareUrl = `viber://forward?text=${encodeURIComponent(shareText)}`;
+  const viberShareUrl = `viber://forward?text=${encodeURIComponent(viberText)}`;
 
-  const handlePlatformClick = (platform: "telegram" | "viber" | "facebook" | "twitter", e: React.MouseEvent<HTMLAnchorElement>) => {
+  const whatsappShareUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(viberText)}`;
+
+  const handlePlatformClick = (platform: "telegram" | "viber" | "whatsapp" | "facebook" | "twitter", e: React.MouseEvent<HTMLAnchorElement>) => {
     try {
       navigator.clipboard.writeText(shareText);
     } catch (err) {}
 
     if (platform === "telegram") {
       showToast("Текст збору скопійовано у буфер! Відкриваємо Telegram...");
+    } else if (platform === "whatsapp") {
+      showToast("Текст з посиланнями скопійовано! Відкриваємо WhatsApp...");
     } else if (platform === "facebook") {
       showToast("Текст збору скопійовано у буфер! Вставте його у ваш допис на Facebook.");
     } else if (platform === "twitter") {
       showToast("Текст скопійовано! Відкриваємо X (Twitter)...");
     } else if (platform === "viber") {
-      showToast("Текст скопійовано! Якщо Viber не відкрився, вставте текст вручну.");
+      showToast("Текст з посиланнями скопійовано! Відкриваємо Viber...");
       if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
         e.preventDefault();
-        window.open(`https://www.viber.com/`, "_blank", "noopener,noreferrer");
+        window.open(`viber://forward?text=${encodeURIComponent(viberText)}`, "_self");
+        setTimeout(() => {
+          window.open(`https://www.viber.com/`, "_blank", "noopener,noreferrer");
+        }, 800);
       }
     }
   };
@@ -135,13 +153,13 @@ ${raw.description}
               )}
             </button>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 sm:grid-cols-5 gap-2">
               <a
                 href={telegramShareUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => handlePlatformClick("telegram", e)}
-                className="py-2.5 px-3 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                className="py-2.5 px-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs flex items-center justify-center gap-1 transition-colors cursor-pointer"
               >
                 <Send className="w-3.5 h-3.5" />
                 <span>Telegram</span>
@@ -152,10 +170,21 @@ ${raw.description}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => handlePlatformClick("viber", e)}
-                className="py-2.5 px-3 rounded-xl bg-purple-700 hover:bg-purple-600 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                className="py-2.5 px-2 rounded-xl bg-purple-700 hover:bg-purple-600 text-white font-bold text-xs flex items-center justify-center gap-1 transition-colors cursor-pointer"
               >
                 <MessageCircle className="w-3.5 h-3.5" />
                 <span>Viber</span>
+              </a>
+
+              <a
+                href={whatsappShareUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => handlePlatformClick("whatsapp", e)}
+                className="py-2.5 px-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1 transition-colors cursor-pointer"
+              >
+                <MessageCircle className="w-3.5 h-3.5" />
+                <span>WhatsApp</span>
               </a>
 
               <a
@@ -163,7 +192,7 @@ ${raw.description}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => handlePlatformClick("facebook", e)}
-                className="py-2.5 px-3 rounded-xl bg-blue-700 hover:bg-blue-600 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                className="py-2.5 px-2 rounded-xl bg-blue-700 hover:bg-blue-600 text-white font-bold text-xs flex items-center justify-center gap-1 transition-colors cursor-pointer"
               >
                 <Facebook className="w-3.5 h-3.5" />
                 <span>Facebook</span>
@@ -174,10 +203,10 @@ ${raw.description}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => handlePlatformClick("twitter", e)}
-                className="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors border border-slate-700 cursor-pointer"
+                className="py-2.5 px-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs flex items-center justify-center gap-1 transition-colors border border-slate-700 cursor-pointer"
               >
                 <Twitter className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Twitter</span>
+                <span>X / Twitter</span>
               </a>
             </div>
           </motion.div>
