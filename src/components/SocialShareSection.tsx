@@ -11,7 +11,7 @@ export const SocialShareSection: React.FC<SocialShareSectionProps> = ({ parsed, 
   const [copied, setCopied] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
-  const OFFICIAL_SITE_URL = "https://hepling.krrigalerts.pp.ua/";
+  const OFFICIAL_SITE_URL = "https://zbir.krrigalerts.pp.ua/";
 
   const shareText = `${raw.title}
 
