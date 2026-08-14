@@ -14,7 +14,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ parsed, raw, isOpen, onC
   const [copied, setCopied] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const OFFICIAL_SITE_URL = "https://hepling.krrigalerts.pp.ua/";
+  const OFFICIAL_SITE_URL = "https://zbir.krrigalerts.pp.ua/";
 
   const shareText = `${raw.title}
 
