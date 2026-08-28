@@ -54,10 +54,15 @@ const DEFAULT_JAR_DATA: MonobankApiResponse = {
   donations: [],
 };
 
-const CACHE_STORAGE_KEY = "mono_jar_local_data_v3";
+const CACHE_STORAGE_KEY = "mono_jar_local_data_v4";
 
 const getInitialData = (): MonobankApiResponse => {
   try {
+    // Clear old legacy keys with outdated 20 UAH state
+    localStorage.removeItem("mono_jar_local_data");
+    localStorage.removeItem("mono_jar_local_data_v2");
+    localStorage.removeItem("mono_jar_local_data_v3");
+
     const localSaved = localStorage.getItem(CACHE_STORAGE_KEY);
     if (localSaved) {
       const parsedData = JSON.parse(localSaved);
@@ -173,7 +178,7 @@ export default function App() {
 
     setMonoApiResponse(updatedResponse);
     try {
-      localStorage.setItem("mono_jar_local_data", JSON.stringify(updatedResponse));
+      localStorage.setItem(CACHE_STORAGE_KEY, JSON.stringify(updatedResponse));
     } catch (e) {}
   };
 

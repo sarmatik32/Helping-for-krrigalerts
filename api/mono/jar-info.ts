@@ -76,7 +76,9 @@ export default async function handler(req: any, res: any) {
 
   const config = getInitialConfig();
   const token = (req.query.token as string) || process.env.MONOBANK_TOKEN || config.monobankToken || "";
-  const jarSendId = (req.query.jarId as string) || process.env.JAR_SEND_ID || config.id || "8cNidLyYfj";
+  const publicJarSendId = config.sendId ? config.sendId.replace(/^jar\//, "") : "8cNidLyYfj";
+  const jarSendId = (req.query.jarId as string) || process.env.JAR_SEND_ID || publicJarSendId;
+  const jarAccountId = config.id || "ITGIelZbj1qFS92cC_BcCCCh9L_Pg1s";
   const forceRefresh = req.query.force === "true" || req.query.force === "1";
 
   let balanceKopecks = config.balance ?? 1952499;
