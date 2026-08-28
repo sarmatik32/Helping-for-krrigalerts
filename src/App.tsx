@@ -54,14 +54,14 @@ const DEFAULT_JAR_DATA: MonobankApiResponse = {
   donations: [],
 };
 
-const CACHE_STORAGE_KEY = "mono_jar_local_data_v2";
+const CACHE_STORAGE_KEY = "mono_jar_local_data_v3";
 
 const getInitialData = (): MonobankApiResponse => {
   try {
-    const localSaved = localStorage.getItem(CACHE_STORAGE_KEY) || localStorage.getItem("mono_jar_local_data");
+    const localSaved = localStorage.getItem(CACHE_STORAGE_KEY);
     if (localSaved) {
       const parsedData = JSON.parse(localSaved);
-      if (parsedData && parsedData.parsed && parsedData.parsed.balanceUah !== undefined) {
+      if (parsedData && parsedData.parsed && typeof parsedData.parsed.balanceUah === "number" && parsedData.parsed.balanceUah > 20) {
         return parsedData;
       }
     }

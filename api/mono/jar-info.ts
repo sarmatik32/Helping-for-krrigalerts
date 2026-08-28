@@ -81,7 +81,7 @@ export default async function handler(req: any, res: any) {
 
   let balanceKopecks = config.balance ?? 1952499;
   let goalKopecks = config.goal ?? 4500000;
-  let jarTitle = config.title || "Збір на 10 комплектів РЕБ для розвідників 129 ОБр ТрО";
+  let jarTitle = config.title || "На РЕБ";
   let ownerName = config.ownerName || "Сергій К. (Кривий Ріг Оповіщення / АЛЕРТС)";
   let fullDescription = config.description || "";
   let apiStatusMsg = token ? "Синхронізовано з Monobank API" : "Використовуються актуальні збережені дані";
@@ -204,6 +204,31 @@ export default async function handler(req: any, res: any) {
         jarTitle = cachedJarState.jarTitle;
         donations = cachedJarState.donations || donations;
       }
+    }
+  } else {
+    // If no token is configured, attempt public Monobank Bank Jar endpoint
+    try {
+      const publicJarId = config.id || "ITGIelZbj1qFS92cC_BcCCCh9L_Pg1s";
+      const publicRes = await fetch(`https://api.monobank.ua/bank/jar/${publicJarId}`);
+      if (publicRes.ok) {
+        const publicData: any = await publicRes.json();
+        if (publicData && (publicData.amount !== undefined || publicData.balance !== undefined)) {
+          balanceKopecks = publicData.amount ?? publicData.balance ?? balanceKopecks;
+          goalKopecks = publicData.goal ?? goalKopecks;
+          jarTitle = publicData.title || jarTitle;
+          cachedJarState = { balanceKopecks, goalKopecks, jarTitle, apiStatusMsg, donations };
+          lastFetchTime = now;
+          saveTempCache({
+            ...config,
+            balance: balanceKopecks,
+            goal: goalKopecks,
+            title: jarTitle,
+            updatedAt: new Date().toISOString(),
+          });
+        }
+      }
+    } catch (e) {
+      // Ignore public fetch error and use config defaults
     }
   }
 
