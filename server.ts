@@ -19,7 +19,7 @@ const CONFIG_FILE = path.join(process.cwd(), "jar-config.json");
 
 // Default initial state
 let jarApiState = {
-  id: "ITGIelZbj1qFS92cC_BcCCCh9L_Pg1s",
+  id: "8cNidLyYfj",
   sendId: "jar/8cNidLyYfj",
   jarUrl: "https://send.monobank.ua/jar/8cNidLyYfj",
   title: "На РЕБ",

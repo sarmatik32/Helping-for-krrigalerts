@@ -18,7 +18,7 @@ const DEFAULT_JAR_DATA: MonobankApiResponse = {
   apiEndpoint: "https://send.monobank.ua/jar/8cNidLyYfj",
   apiStatusMsg: "Синхронізовано з Monobank API",
   rawMonobankResponse: {
-    id: "ITGIelZbj1qFS92cC_BcCCCh9L_Pg1s",
+    id: "8cNidLyYfj",
     sendId: "8cNidLyYfj",
     title: "На РЕБ",
     description: `Друзі, звертаємося до кожного з вас.

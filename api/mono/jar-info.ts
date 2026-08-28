@@ -34,7 +34,7 @@ function getInitialConfig() {
   }
 
   return {
-    id: "ITGIelZbj1qFS92cC_BcCCCh9L_Pg1s",
+    id: "8cNidLyYfj",
     sendId: "jar/8cNidLyYfj",
     jarUrl: "https://send.monobank.ua/jar/8cNidLyYfj",
     title: "На РЕБ",
@@ -206,31 +206,6 @@ export default async function handler(req: any, res: any) {
         jarTitle = cachedJarState.jarTitle;
         donations = cachedJarState.donations || donations;
       }
-    }
-  } else {
-    // If no token is configured, attempt public Monobank Bank Jar endpoint
-    try {
-      const publicJarId = config.id || "ITGIelZbj1qFS92cC_BcCCCh9L_Pg1s";
-      const publicRes = await fetch(`https://api.monobank.ua/bank/jar/${publicJarId}`);
-      if (publicRes.ok) {
-        const publicData: any = await publicRes.json();
-        if (publicData && (publicData.amount !== undefined || publicData.balance !== undefined)) {
-          balanceKopecks = publicData.amount ?? publicData.balance ?? balanceKopecks;
-          goalKopecks = publicData.goal ?? goalKopecks;
-          jarTitle = publicData.title || jarTitle;
-          cachedJarState = { balanceKopecks, goalKopecks, jarTitle, apiStatusMsg, donations };
-          lastFetchTime = now;
-          saveTempCache({
-            ...config,
-            balance: balanceKopecks,
-            goal: goalKopecks,
-            title: jarTitle,
-            updatedAt: new Date().toISOString(),
-          });
-        }
-      }
-    } catch (e) {
-      // Ignore public fetch error and use config defaults
     }
   }
 
