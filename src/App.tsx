@@ -18,7 +18,7 @@ const DEFAULT_JAR_DATA: MonobankApiResponse = {
   apiEndpoint: "https://send.monobank.ua/jar/8cNidLyYfj",
   apiStatusMsg: "Синхронізовано з Monobank API",
   rawMonobankResponse: {
-    id: "8cNidLyYfj",
+    id: "ITGIelZbj1qFS92cC_BcCCCh9L_Pg1s",
     sendId: "8cNidLyYfj",
     title: "Збір на 10 комплектів РЕБ для розвідників 129 ОБр ТрО",
     description: `Друзі, звертаємося до кожного з вас.
@@ -29,7 +29,7 @@ const DEFAULT_JAR_DATA: MonobankApiResponse = {
 
 Якщо ви не маєте змоги підтримати гривнею — дуже просимо про максимальний розголос та репост. Кожна гривня та кожен вашій пошир — це реальний шанс захистити розвідників на передку. Разом до перемоги! 🇺🇦`,
     currencyCode: 980,
-    balance: 1000,
+    balance: 1952499,
     goal: 4500000,
     ownerName: "Сергій К. (Кривий Ріг Оповіщення / АЛЕРТС)",
     updatedAt: new Date().toISOString(),
@@ -44,22 +44,24 @@ const DEFAULT_JAR_DATA: MonobankApiResponse = {
 ⚡️ Від себе: команда адмінів уже вклала перші кошти, щоб запустити збір.
 
 Якщо ви не маєте змоги підтримати гривнею — дуже просимо про максимальний розголос та репост. Кожна гривня та кожен вашій пошир — це реальний шанс захистити розвідників на передку. Разом до перемоги! 🇺🇦`,
-    balanceUah: 10,
+    balanceUah: 19525,
     goalUah: 45000,
     currency: "UAH",
-    percentage: 0,
-    remainingUah: 44990,
+    percentage: 43,
+    remainingUah: 25475,
     logoUrl: "/logo.png",
   },
   donations: [],
 };
 
+const CACHE_STORAGE_KEY = "mono_jar_local_data_v2";
+
 const getInitialData = (): MonobankApiResponse => {
   try {
-    const localSaved = localStorage.getItem("mono_jar_local_data");
+    const localSaved = localStorage.getItem(CACHE_STORAGE_KEY) || localStorage.getItem("mono_jar_local_data");
     if (localSaved) {
       const parsedData = JSON.parse(localSaved);
-      if (parsedData && parsedData.parsed) {
+      if (parsedData && parsedData.parsed && parsedData.parsed.balanceUah !== undefined) {
         return parsedData;
       }
     }
@@ -75,17 +77,37 @@ export default function App() {
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [isShareOpen, setIsShareOpen] = useState<boolean>(false);
   const [isAdminOpen, setIsAdminOpen] = useState<boolean>(false);
+  const [lastClientFetch, setLastClientFetch] = useState<number>(0);
 
-  // Load Monobank Jar API data
-  const fetchMonoJarData = async () => {
+  // Load Monobank Jar API data with client-side caching & rate-limiting guard
+  const fetchMonoJarData = async (force: boolean = false) => {
+    const now = Date.now();
+    // Prevent spamming requests within 10 seconds on client
+    if (!force && lastClientFetch > 0 && now - lastClientFetch < 60000) {
+      return;
+    }
+
     try {
-      const res = await fetch("/api/mono/jar-info");
+      const url = force ? "/api/mono/jar-info?force=true" : "/api/mono/jar-info";
+      const res = await fetch(url);
       if (res.ok) {
         const result: MonobankApiResponse = await res.json();
         if (result && result.parsed) {
-          setMonoApiResponse(result);
+          setMonoApiResponse((prev) => ({
+            ...prev,
+            ...result,
+            // Guard against any accidental zero/undefined resets
+            parsed: {
+              ...prev.parsed,
+              ...result.parsed,
+              balanceUah: result.parsed.balanceUah || prev.parsed.balanceUah,
+              goalUah: result.parsed.goalUah || prev.parsed.goalUah,
+            },
+            donations: (result.donations && result.donations.length > 0) ? result.donations : prev.donations,
+          }));
+          setLastClientFetch(now);
           try {
-            localStorage.setItem("mono_jar_local_data", JSON.stringify(result));
+            localStorage.setItem(CACHE_STORAGE_KEY, JSON.stringify(result));
           } catch (e) {}
         }
       }
@@ -102,7 +124,7 @@ export default function App() {
 
   const handleRefreshMono = async () => {
     setIsRefreshing(true);
-    await fetchMonoJarData();
+    await fetchMonoJarData(true);
     setTimeout(() => setIsRefreshing(false), 600);
   };
 

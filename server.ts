@@ -19,10 +19,10 @@ const CONFIG_FILE = path.join(process.cwd(), "jar-config.json");
 
 // Default initial state
 let jarApiState = {
-  id: "8cNidLyYfj",
+  id: "ITGIelZbj1qFS92cC_BcCCCh9L_Pg1s",
   sendId: "jar/8cNidLyYfj",
   jarUrl: "https://send.monobank.ua/jar/8cNidLyYfj",
-  title: "🚨 Терміновий збір: Детектор дронів для нашого побратима! 🚨",
+  title: "Збір на 10 комплектів РЕБ для розвідників 129 ОБр ТрО",
   description: `Друзі, звертаємося до кожного з вас.
 Наш побратим спільноти зараз виконує бойові завдання у складі розвідроти на Слов’янському напрямку. Для безпеки, вчасного виявлення ворожих «пташок» та збереження життя терміново потрібен портативний детектор дронів (засіб РЕР).
 
@@ -32,8 +32,8 @@ let jarApiState = {
 Якщо ви не маєте змоги підтримати гривнею — дуже просимо про максимальний розголос та репост. Кожна гривня та кожен вашій пошир — це реальний шанс захистити розвідників на передку. Разом до перемоги! 🇺🇦`,
   currencyCode: 980,
   currencyName: "UAH",
-  balance: 3845000, // in kopecks (38,450.00 UAH)
-  goal: 8500000,    // in kopecks (85,000.00 UAH)
+  balance: 1952499, // in kopecks (19,524.99 UAH)
+  goal: 4500000,    // in kopecks (45,000.00 UAH)
   ownerName: "Сергій К. (Кривий Ріг Оповіщення / АЛЕРТС)",
   monobankToken: "",
   logoUrl: "/logo.png",
@@ -62,22 +62,30 @@ function saveConfig() {
 
 // Recent donations list (populated dynamically from Monobank API statement)
 let recentDonations: any[] = [];
+let lastFetchTimestamp = 0;
+const CACHE_TTL_MS = 60000;
 
 // API: Fetch Monobank Jar API Data
 app.get("/api/mono/jar-info", async (req, res) => {
-  const { jarId, token } = req.query;
+  res.setHeader("Cache-Control", "public, s-maxage=60, stale-while-revalidate=120");
+  const { jarId, token, force } = req.query;
   const targetToken = (token as string) || process.env.MONOBANK_TOKEN || jarApiState.monobankToken;
   const activeJarId = (jarId as string) || jarApiState.id;
   let apiStatusMsg = "Використовуються збережені дані збору";
 
+  const now = Date.now();
+  const isCacheFresh = (now - lastFetchTimestamp < CACHE_TTL_MS);
+  const forceRefresh = force === "true" || force === "1";
+
   try {
-    if (targetToken && targetToken.trim() !== "") {
-      // Fetch from Monobank Client API if token is set
+    if (targetToken && targetToken.trim() !== "" && (!isCacheFresh || forceRefresh)) {
+      // Fetch from Monobank Client API if token is set and cache expired
       const response = await fetch("https://api.monobank.ua/personal/client-info", {
         headers: { "X-Token": targetToken.trim() }
       });
 
       if (response.ok) {
+        lastFetchTimestamp = now;
         const clientInfo = await response.json();
         if (clientInfo.jars && clientInfo.jars.length > 0) {
           const cleanActiveId = activeJarId.replace("jar/", "").trim();
@@ -182,6 +190,8 @@ app.get("/api/mono/jar-info", async (req, res) => {
       } else {
         apiStatusMsg = `Помилка Monobank API (${response.status}). Відображаються поточні дані.`;
       }
+    } else if (isCacheFresh) {
+      apiStatusMsg = "Синхронізовано з Monobank API (з кешу)";
     }
 
     // Convert kopecks to UAH
