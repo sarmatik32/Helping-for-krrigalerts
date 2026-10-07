@@ -3,6 +3,7 @@ import { FileText, Share2 } from "lucide-react";
 
 import { LogoHeader } from "./components/LogoHeader";
 import { ProgressSection } from "./components/ProgressSection";
+import { ClosedFundraiserView } from "./components/ClosedFundraiserView";
 import { DonationTicker } from "./components/DonationTicker";
 import { EquipmentMatrix } from "./components/EquipmentMatrix";
 import { SocialShareSection } from "./components/SocialShareSection";
@@ -153,6 +154,13 @@ export default function App() {
     const newGoalUah = Number(updatedFields.goalUah) || monoApiResponse.parsed.goalUah;
     const newRemaining = Math.max(0, newGoalUah - newBalanceUah);
     const newPct = newGoalUah > 0 ? Math.min(100, Math.round((newBalanceUah / newGoalUah) * 100)) : 0;
+    const newIsClosed = updatedFields.isClosed !== undefined ? Boolean(updatedFields.isClosed) : monoApiResponse.parsed.isClosed;
+
+    const snapBal = Number(updatedFields.closedBalanceUah) || newBalanceUah;
+    const snapGoal = Number(updatedFields.closedGoalUah) || newGoalUah;
+    const snapPct = updatedFields.closedPercentage !== undefined
+      ? Number(updatedFields.closedPercentage)
+      : (snapGoal > 0 ? Math.round((snapBal / snapGoal) * 100) : 100);
 
     const updatedResponse: MonobankApiResponse = {
       ...monoApiResponse,
@@ -162,6 +170,13 @@ export default function App() {
         description: updatedFields.description || monoApiResponse.rawMonobankResponse.description,
         balance: newBalanceUah * 100,
         goal: newGoalUah * 100,
+        isClosed: newIsClosed,
+        closedAt: updatedFields.closedAt !== undefined ? updatedFields.closedAt : monoApiResponse.rawMonobankResponse.closedAt,
+        closedReportTitle: updatedFields.closedReportTitle !== undefined ? updatedFields.closedReportTitle : monoApiResponse.rawMonobankResponse.closedReportTitle,
+        closedReportText: updatedFields.closedReportText !== undefined ? updatedFields.closedReportText : monoApiResponse.rawMonobankResponse.closedReportText,
+        closedBalanceUah: snapBal,
+        closedGoalUah: snapGoal,
+        closedPercentage: snapPct,
       },
       parsed: {
         ...monoApiResponse.parsed,
@@ -173,6 +188,13 @@ export default function App() {
         remainingUah: newRemaining,
         percentage: newPct,
         logoUrl: updatedFields.logoUrl !== undefined ? updatedFields.logoUrl : monoApiResponse.parsed.logoUrl,
+        isClosed: newIsClosed,
+        closedAt: updatedFields.closedAt !== undefined ? updatedFields.closedAt : monoApiResponse.parsed.closedAt,
+        closedReportTitle: updatedFields.closedReportTitle !== undefined ? updatedFields.closedReportTitle : monoApiResponse.parsed.closedReportTitle,
+        closedReportText: updatedFields.closedReportText !== undefined ? updatedFields.closedReportText : monoApiResponse.parsed.closedReportText,
+        closedBalanceUah: snapBal,
+        closedGoalUah: snapGoal,
+        closedPercentage: snapPct,
       },
     };
 
@@ -197,6 +219,31 @@ export default function App() {
 
   const { parsed, rawMonobankResponse, donations } = monoApiResponse;
 
+  // When fundraiser is CLOSED: strictly display centered logo, big gratitude inscription, visualization of jar % & sum at closure, and NOTHING ELSE!
+  if (parsed.isClosed) {
+    return (
+      <div className="min-h-screen bg-[#070b14] text-slate-100 font-sans selection:bg-amber-500 selection:text-slate-950 relative overflow-x-hidden">
+        {/* Animated flying drones background */}
+        <DroneBackgroundAnimation />
+
+        <ClosedFundraiserView
+          parsed={parsed}
+          raw={rawMonobankResponse}
+          onOpenAdmin={() => setIsAdminOpen(true)}
+        />
+
+        {/* Admin settings modal to allow management or reopening */}
+        <AdminSettingsModal
+          parsed={parsed}
+          raw={rawMonobankResponse}
+          isOpen={isAdminOpen}
+          onClose={() => setIsAdminOpen(false)}
+          onSave={handleSaveAdminConfig}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#070b14] text-slate-100 font-sans selection:bg-cyan-500 selection:text-slate-950 relative overflow-x-hidden">
       {/* Animated flying drones background */}
@@ -209,7 +256,7 @@ export default function App() {
         {/* Centered Logo Header */}
         <LogoHeader logoUrl={parsed.logoUrl} />
 
-        {/* Row of 2 balanced cards: ProgressSection ("Збір коштів активний") & DonationQuickPay ("Оплата в Банку Monobank") */}
+        {/* Row of 2 balanced cards: ProgressSection & DonationQuickPay */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 my-6 items-stretch">
           <ProgressSection
             parsed={parsed}

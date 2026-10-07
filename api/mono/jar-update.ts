@@ -30,6 +30,13 @@ export default async function handler(req: any, res: any) {
     goalUah,
     monobankToken,
     logoUrl,
+    isClosed,
+    closedAt,
+    closedReportTitle,
+    closedReportText,
+    closedBalanceUah,
+    closedGoalUah,
+    closedPercentage,
   } = req.body || {};
 
   const inputHash = crypto.createHash("sha256").update(String(adminPassword || "")).digest("hex");
@@ -65,6 +72,13 @@ export default async function handler(req: any, res: any) {
       goal: goalUah !== undefined ? Math.round(Number(goalUah) * 100) : currentConfig.goal,
       monobankToken: monobankToken !== undefined ? monobankToken : currentConfig.monobankToken,
       logoUrl: logoUrl !== undefined ? logoUrl : currentConfig.logoUrl,
+      isClosed: isClosed !== undefined ? Boolean(isClosed) : currentConfig.isClosed,
+      closedAt: closedAt !== undefined ? closedAt : (isClosed && !currentConfig.closedAt ? new Date().toISOString() : currentConfig.closedAt),
+      closedReportTitle: closedReportTitle !== undefined ? closedReportTitle : currentConfig.closedReportTitle,
+      closedReportText: closedReportText !== undefined ? closedReportText : currentConfig.closedReportText,
+      closedBalanceUah: closedBalanceUah !== undefined ? Number(closedBalanceUah) : (currentConfig.closedBalanceUah || (balanceUah !== undefined ? Number(balanceUah) : Math.round(currentConfig.balance / 100))),
+      closedGoalUah: closedGoalUah !== undefined ? Number(closedGoalUah) : (currentConfig.closedGoalUah || (goalUah !== undefined ? Number(goalUah) : Math.round(currentConfig.goal / 100))),
+      closedPercentage: closedPercentage !== undefined ? Number(closedPercentage) : currentConfig.closedPercentage,
       updatedAt: new Date().toISOString(),
     };
 

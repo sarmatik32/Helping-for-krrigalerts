@@ -8,6 +8,13 @@ export interface RawMonobankResponse {
   goal: number;    // in kopecks
   ownerName: string;
   updatedAt: string;
+  isClosed?: boolean;
+  closedAt?: string;
+  closedReportTitle?: string;
+  closedReportText?: string;
+  closedBalanceUah?: number;
+  closedGoalUah?: number;
+  closedPercentage?: number;
 }
 
 export interface ParsedMonobankData {
@@ -20,6 +27,13 @@ export interface ParsedMonobankData {
   percentage: number;
   remainingUah: number;
   logoUrl?: string;
+  isClosed?: boolean;
+  closedAt?: string;
+  closedReportTitle?: string;
+  closedReportText?: string;
+  closedBalanceUah?: number;
+  closedGoalUah?: number;
+  closedPercentage?: number;
 }
 
 export interface DonationItem {

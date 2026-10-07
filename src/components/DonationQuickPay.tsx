@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { ExternalLink, QrCode, Copy, Check, HeartHandshake, CreditCard } from "lucide-react";
+import { ExternalLink, QrCode, Copy, Check, HeartHandshake, CreditCard, Award, CheckCircle2 } from "lucide-react";
 import QRCode from "qrcode";
 import { ParsedMonobankData, RawMonobankResponse } from "../types";
 
@@ -20,6 +20,7 @@ export const DonationQuickPay: React.FC<DonationQuickPayProps> = ({ parsed }) =>
   const [copiedLink, setCopiedLink] = useState<boolean>(false);
   const [copiedCard, setCopiedCard] = useState<boolean>(false);
 
+  const isClosed = Boolean(parsed.isClosed);
   const activeAmount = Number(customAmount) > 0 ? Number(customAmount) : selectedAmount;
 
   // Build target jar URL with amount query parameter 'a'
@@ -42,13 +43,13 @@ export const DonationQuickPay: React.FC<DonationQuickPayProps> = ({ parsed }) =>
       width: 320,
       margin: 2,
       color: {
-        dark: "#00d2ff",
+        dark: isClosed ? "#f59e0b" : "#00d2ff",
         light: "#020617",
       },
     })
       .then((url) => setQrDataUrl(url))
       .catch((err) => console.error(err));
-  }, [activeJarUrl]);
+  }, [activeJarUrl, isClosed]);
 
   const copyJarLink = () => {
     navigator.clipboard.writeText(parsed.jarUrl);
@@ -63,22 +64,32 @@ export const DonationQuickPay: React.FC<DonationQuickPayProps> = ({ parsed }) =>
   };
 
   return (
-    <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xl backdrop-blur-md relative flex flex-col justify-between h-full">
+    <div className={`bg-slate-900/90 border ${
+      isClosed ? "border-amber-500/40" : "border-slate-800"
+    } rounded-2xl p-5 sm:p-6 shadow-2xl backdrop-blur-md relative flex flex-col justify-between h-full`}>
       {/* Background ambient glow */}
-      <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className={`absolute top-0 right-0 w-64 h-64 ${
+        isClosed ? "bg-amber-500/10" : "bg-cyan-500/10"
+      } rounded-full blur-3xl pointer-events-none`} />
 
       <div>
         {/* Header */}
         <div className="flex items-center justify-between gap-3 pb-4 border-b border-slate-800">
           <div>
             <div className="flex items-center gap-2">
-              <HeartHandshake className="w-5 h-5 text-cyan-400 shrink-0" />
+              {isClosed ? (
+                <Award className="w-5 h-5 text-amber-400 shrink-0" />
+              ) : (
+                <HeartHandshake className="w-5 h-5 text-cyan-400 shrink-0" />
+              )}
               <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight">
-                Оплата в Банку Monobank
+                {isClosed ? "Реквізити та Банка (Збір закрито)" : "Оплата в Банку Monobank"}
               </h2>
             </div>
             <p className="text-xs text-slate-400 mt-1">
-              Швидкий переказ через Банку або поповнення картки
+              {isClosed
+                ? "Збір коштів завершено · Дякуємо кожному за внесок!"
+                : "Швидкий переказ через Банку або поповнення картки"}
             </p>
           </div>
 
@@ -92,10 +103,22 @@ export const DonationQuickPay: React.FC<DonationQuickPayProps> = ({ parsed }) =>
           </button>
         </div>
 
+        {/* Closed Banner Notification */}
+        {isClosed && (
+          <div className="mt-4 p-3 rounded-xl bg-amber-950/50 border border-amber-500/30 flex items-center gap-2.5 text-xs text-amber-200">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span>
+              <strong>Збір офіційно закрито!</strong> Кошти зібрано у повному обсязі, дякуємо за вашу підтримку!
+            </span>
+          </div>
+        )}
+
         {/* Card Number Copy Section */}
         <div className="mt-4 p-3.5 bg-slate-950/90 border border-slate-800 rounded-xl flex items-center justify-between gap-3 shadow-inner">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="p-2.5 rounded-lg bg-sky-500/10 border border-sky-500/20 text-sky-400 shrink-0">
+            <div className={`p-2.5 rounded-lg ${
+              isClosed ? "bg-amber-500/10 border border-amber-500/20 text-amber-400" : "bg-sky-500/10 border border-sky-500/20 text-sky-400"
+            } shrink-0`}>
               <CreditCard className="w-5 h-5" />
             </div>
             <div className="min-w-0">
@@ -129,7 +152,7 @@ export const DonationQuickPay: React.FC<DonationQuickPayProps> = ({ parsed }) =>
         {/* Preset Amount Selector */}
         <div className="mt-4">
           <label className="text-[11px] font-bold uppercase tracking-wider text-slate-300 block mb-2 font-mono">
-            Оберіть або введіть суму (UAH):
+            {isClosed ? "Сума внеску (архів/перегляд):" : "Оберіть або введіть суму (UAH):"}
           </label>
 
           <div className="grid grid-cols-3 gap-2">
@@ -145,7 +168,9 @@ export const DonationQuickPay: React.FC<DonationQuickPayProps> = ({ parsed }) =>
                   }}
                   className={`py-2 px-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 border text-center cursor-pointer ${
                     isSelected
-                      ? "bg-gradient-to-r from-sky-500 to-cyan-500 text-slate-950 border-cyan-300 shadow-[0_0_12px_rgba(0,210,255,0.4)] font-black"
+                      ? isClosed
+                        ? "bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 border-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.4)] font-black"
+                        : "bg-gradient-to-r from-sky-500 to-cyan-500 text-slate-950 border-cyan-300 shadow-[0_0_12px_rgba(0,210,255,0.4)] font-black"
                       : "bg-slate-950 hover:bg-slate-800 text-slate-200 border-slate-800 hover:border-slate-700"
                   }`}
                 >
@@ -181,9 +206,17 @@ export const DonationQuickPay: React.FC<DonationQuickPayProps> = ({ parsed }) =>
           href={activeJarUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl bg-gradient-to-r from-cyan-500 via-sky-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-sm shadow-[0_0_18px_rgba(0,210,255,0.4)] hover:shadow-[0_0_25px_rgba(0,210,255,0.6)] transition-all transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
+          className={`w-full inline-flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl ${
+            isClosed
+              ? "bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 shadow-[0_0_18px_rgba(245,158,11,0.4)]"
+              : "bg-gradient-to-r from-cyan-500 via-sky-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 shadow-[0_0_18px_rgba(0,210,255,0.4)] hover:shadow-[0_0_25px_rgba(0,210,255,0.6)]"
+          } font-black text-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer`}
         >
-          <span>Поповнити Банку ({activeAmount > 0 ? `${activeAmount.toLocaleString()} грн` : ''})</span>
+          <span>
+            {isClosed
+              ? "Переглянути Банку в Mono (Збір закрито)"
+              : `Поповнити Банку (${activeAmount > 0 ? `${activeAmount.toLocaleString()} грн` : ""})`}
+          </span>
           <ExternalLink className="w-4 h-4 stroke-[2.5]" />
         </a>
 
@@ -243,7 +276,7 @@ export const DonationQuickPay: React.FC<DonationQuickPayProps> = ({ parsed }) =>
                 </a>
                 <button
                   onClick={() => setShowQrModal(false)}
-                  className="px-4 py-2.5 rounded-xl bg-slate-800 text-slate-300 font-semibold text-xs hover:bg-slate-700"
+                  className="px-4 py-2.5 rounded-xl bg-slate-800 text-slate-300 font-semibold text-xs hover:bg-slate-700 cursor-pointer"
                 >
                   Закрити
                 </button>
@@ -255,4 +288,5 @@ export const DonationQuickPay: React.FC<DonationQuickPayProps> = ({ parsed }) =>
     </div>
   );
 };
+
 

@@ -52,6 +52,10 @@ function getInitialConfig() {
     ownerName: "Сергій К. (Кривий Ріг Оповіщення / АЛЕРТС)",
     monobankToken: "",
     logoUrl: "/logo.png",
+    isClosed: false,
+    closedAt: "",
+    closedReportTitle: "Збір успішно завершено! Мета досягнута!",
+    closedReportText: "Щиро дякуємо кожному, хто підтримав наш збір коштами, репостами та теплими словами. Завдяки вашій згуртованості необхідну суму для закупівлі детектора дронів зібрано! Обладнання замовляється та буде передано розвідникам 129 ОБр ТрО на Слов'янський напрямок. Ви неймовірні!",
   };
 }
 
@@ -228,6 +232,13 @@ export default async function handler(req: any, res: any) {
       goal: goalKopecks,
       ownerName,
       updatedAt: new Date().toISOString(),
+      isClosed: Boolean(config.isClosed),
+      closedAt: config.closedAt || "",
+      closedReportTitle: config.closedReportTitle || "",
+      closedReportText: config.closedReportText || "",
+      closedBalanceUah: config.closedBalanceUah || balanceUah,
+      closedGoalUah: config.closedGoalUah || goalUah,
+      closedPercentage: config.closedPercentage || percentage,
     },
     parsed: {
       jarUrl: `https://send.monobank.ua/jar/${jarSendId}`,
@@ -239,6 +250,13 @@ export default async function handler(req: any, res: any) {
       percentage,
       remainingUah,
       logoUrl: config.logoUrl || "/logo.png",
+      isClosed: Boolean(config.isClosed),
+      closedAt: config.closedAt || "",
+      closedReportTitle: config.closedReportTitle || "",
+      closedReportText: config.closedReportText || "",
+      closedBalanceUah: config.closedBalanceUah || balanceUah,
+      closedGoalUah: config.closedGoalUah || goalUah,
+      closedPercentage: config.closedPercentage || percentage,
     },
     donations,
   });

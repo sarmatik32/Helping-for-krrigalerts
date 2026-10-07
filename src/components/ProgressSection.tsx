@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "motion/react";
-import { RefreshCw, ExternalLink, Target, Sparkles, Hourglass, ShieldCheck } from "lucide-react";
+import { RefreshCw, ExternalLink, Target, Sparkles, Hourglass, ShieldCheck, CheckCircle2, Award } from "lucide-react";
 import { ParsedMonobankData, RawMonobankResponse } from "../types";
 
 interface ProgressSectionProps {
@@ -14,26 +14,44 @@ interface ProgressSectionProps {
 
 export const ProgressSection: React.FC<ProgressSectionProps> = ({
   parsed,
-  apiStatusMsg,
   onRefreshMono,
   isRefreshing,
 }) => {
+  const isClosed = Boolean(parsed.isClosed);
+
   return (
-    <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xl backdrop-blur-md relative overflow-hidden flex flex-col justify-between h-full">
+    <div className={`bg-slate-900/90 border ${
+      isClosed ? "border-amber-500/40" : "border-slate-800"
+    } rounded-2xl p-5 sm:p-6 shadow-2xl backdrop-blur-md relative overflow-hidden flex flex-col justify-between h-full`}>
       {/* Background neon glow */}
-      <div className="absolute -top-10 -left-10 w-60 h-60 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className={`absolute -top-10 -left-10 w-60 h-60 ${
+        isClosed ? "bg-amber-500/15" : "bg-sky-500/10"
+      } rounded-full blur-3xl pointer-events-none`} />
 
       <div>
         {/* Header & Live Indicator */}
         <div className="flex items-center justify-between gap-3 pb-3.5 border-b border-slate-800">
           <div className="flex items-center gap-2">
-            <span className="relative flex h-2.5 w-2.5 shrink-0">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-            </span>
-            <span className="text-xs font-bold text-emerald-400 uppercase tracking-widest font-mono">
-              Збір коштів активний
-            </span>
+            {isClosed ? (
+              <>
+                <div className="p-1 rounded-md bg-amber-500/20 text-amber-400">
+                  <Award className="w-3.5 h-3.5" />
+                </div>
+                <span className="text-xs font-bold text-amber-400 uppercase tracking-widest font-mono">
+                  Збір успішно закрито
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="relative flex h-2.5 w-2.5 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                </span>
+                <span className="text-xs font-bold text-emerald-400 uppercase tracking-widest font-mono">
+                  Збір коштів активний
+                </span>
+              </>
+            )}
           </div>
 
           <button
@@ -51,7 +69,7 @@ export const ProgressSection: React.FC<ProgressSectionProps> = ({
         <div className="mt-4 p-4 bg-slate-950/80 border border-slate-800 rounded-xl relative overflow-hidden flex items-center justify-between gap-3 shadow-inner">
           <div className="min-w-0">
             <span className="text-[10px] uppercase font-mono font-bold tracking-wider text-slate-400 block mb-0.5">
-              Накопичено у Банці:
+              {isClosed ? "Фінально накопичено у Банці:" : "Накопичено у Банці:"}
             </span>
             <div className="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-baseline gap-1.5 truncate">
               <span className="bg-gradient-to-r from-white via-slate-100 to-sky-200 bg-clip-text text-transparent">
@@ -66,17 +84,21 @@ export const ProgressSection: React.FC<ProgressSectionProps> = ({
             <div className="relative w-8 h-12 border-2 border-slate-600 rounded-lg overflow-hidden bg-slate-950 flex flex-col justify-end">
               <motion.div
                 initial={{ height: "0%" }}
-                animate={{ height: `${parsed.percentage}%` }}
+                animate={{ height: `${Math.min(100, Math.max(parsed.percentage, isClosed ? 100 : 0))}%` }}
                 transition={{ duration: 1, ease: "easeOut" }}
-                className="w-full bg-gradient-to-t from-sky-500 to-cyan-400 rounded-b-sm"
+                className={`w-full ${
+                  isClosed
+                    ? "bg-gradient-to-t from-amber-500 to-yellow-300"
+                    : "bg-gradient-to-t from-sky-500 to-cyan-400"
+                } rounded-b-sm`}
               />
             </div>
             <div className="text-right font-mono">
-              <div className="text-lg font-black text-cyan-400 leading-none">
-                {parsed.percentage}%
+              <div className={`text-lg font-black ${isClosed ? "text-amber-400" : "text-cyan-400"} leading-none`}>
+                {isClosed ? `${Math.max(100, parsed.percentage)}%` : `${parsed.percentage}%`}
               </div>
               <div className="text-[9px] text-slate-500 uppercase font-semibold">
-                прогрес
+                {isClosed ? "закрито" : "прогрес"}
               </div>
             </div>
           </div>
@@ -86,18 +108,24 @@ export const ProgressSection: React.FC<ProgressSectionProps> = ({
         <div className="mt-3.5 space-y-1.5">
           <div className="flex justify-between items-center text-xs font-mono font-semibold">
             <span className="text-slate-400 flex items-center gap-1">
-              <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-              Прогрес збору
+              <Sparkles className={`w-3.5 h-3.5 ${isClosed ? "text-amber-400" : "text-cyan-400"}`} />
+              {isClosed ? "Підсумок збору" : "Прогрес збору"}
             </span>
-            <span className="text-cyan-300 font-bold">{parsed.percentage}% виконується</span>
+            <span className={`${isClosed ? "text-amber-300" : "text-cyan-300"} font-bold`}>
+              {isClosed ? "100% виконано · Збір закрито" : `${parsed.percentage}% виконується`}
+            </span>
           </div>
 
           <div className="w-full bg-slate-950 h-3.5 rounded-full overflow-hidden p-0.5 border border-slate-800 relative">
             <motion.div
               initial={{ width: 0 }}
-              animate={{ width: `${parsed.percentage}%` }}
+              animate={{ width: `${Math.min(100, Math.max(parsed.percentage, isClosed ? 100 : 0))}%` }}
               transition={{ duration: 1, ease: "easeOut" }}
-              className="h-full rounded-full bg-gradient-to-r from-blue-600 via-sky-400 to-cyan-300 relative shadow-[0_0_12px_rgba(56,189,248,0.6)]"
+              className={`h-full rounded-full ${
+                isClosed
+                  ? "bg-gradient-to-r from-amber-600 via-amber-400 to-yellow-300 shadow-[0_0_12px_rgba(245,158,11,0.6)]"
+                  : "bg-gradient-to-r from-blue-600 via-sky-400 to-cyan-300 shadow-[0_0_12px_rgba(56,189,248,0.6)]"
+              } relative`}
             />
           </div>
         </div>
@@ -125,11 +153,17 @@ export const ProgressSection: React.FC<ProgressSectionProps> = ({
 
           <div className="p-2.5 bg-slate-950/70 border border-slate-800/80 rounded-xl text-center">
             <span className="text-[9px] font-mono uppercase text-slate-400 block font-semibold flex items-center justify-center gap-1">
-              <Hourglass className="w-2.5 h-2.5 text-amber-400 inline" />
-              Залишилось
+              {isClosed ? (
+                <CheckCircle2 className="w-2.5 h-2.5 text-emerald-400 inline" />
+              ) : (
+                <Hourglass className="w-2.5 h-2.5 text-amber-400 inline" />
+              )}
+              {isClosed ? "Статус" : "Залишилось"}
             </span>
-            <span className="text-xs sm:text-sm font-black text-sky-300 font-mono block mt-0.5 truncate">
-              {parsed.remainingUah.toLocaleString()} ₴
+            <span className={`text-xs sm:text-sm font-black ${
+              isClosed ? "text-emerald-400" : "text-sky-300"
+            } font-mono block mt-0.5 truncate`}>
+              {isClosed ? "Досягнуто 🎉" : `${parsed.remainingUah.toLocaleString()} ₴`}
             </span>
           </div>
         </div>
@@ -139,7 +173,7 @@ export const ProgressSection: React.FC<ProgressSectionProps> = ({
       <div className="mt-4 pt-3.5 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-2.5">
         <div className="flex items-center gap-1.5 text-xs text-slate-400 font-mono">
           <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-          <span>Офіційний збір на РЕБ / РЕР</span>
+          <span>{isClosed ? "Збір завершено · Дякуємо за допомогу!" : "Офіційний збір на РЕБ / РЕР"}</span>
         </div>
 
         <a
@@ -148,7 +182,7 @@ export const ProgressSection: React.FC<ProgressSectionProps> = ({
           rel="noopener noreferrer"
           className="w-full sm:w-auto inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 hover:text-white font-bold text-xs border border-slate-700 transition-colors shrink-0 cursor-pointer"
         >
-          <span>Відкрити Банку в Mono</span>
+          <span>{isClosed ? "Переглянути Банку в Mono" : "Відкрити Банку в Mono"}</span>
           <ExternalLink className="w-3.5 h-3.5" />
         </a>
       </div>
