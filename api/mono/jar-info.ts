@@ -9,7 +9,21 @@ const CACHE_TTL_MS = 60000; // Monobank allows max 1 request per 60 seconds
 const TEMP_CACHE_FILE = path.join("/tmp", "mono_jar_cache.json");
 
 function getInitialConfig() {
-  // 1. Try reading temp cache if exists
+  // 1. Try reading project jar-config.json in project root first!
+  try {
+    const configPath = path.join(process.cwd(), "jar-config.json");
+    if (fs.existsSync(configPath)) {
+      const content = fs.readFileSync(configPath, "utf8");
+      const parsedConfig = JSON.parse(content);
+      if (parsedConfig) {
+        return parsedConfig;
+      }
+    }
+  } catch (e) {
+    console.warn("Could not read jar-config.json:", e);
+  }
+
+  // 2. Fallback to temp cache if exists
   try {
     if (fs.existsSync(TEMP_CACHE_FILE)) {
       const tempContent = fs.readFileSync(TEMP_CACHE_FILE, "utf8");
@@ -20,17 +34,6 @@ function getInitialConfig() {
     }
   } catch (e) {
     // Ignore temp read error
-  }
-
-  // 2. Try reading project jar-config.json
-  try {
-    const configPath = path.join(process.cwd(), "jar-config.json");
-    if (fs.existsSync(configPath)) {
-      const content = fs.readFileSync(configPath, "utf8");
-      return JSON.parse(content);
-    }
-  } catch (e) {
-    console.warn("Could not read jar-config.json:", e);
   }
 
   return {
@@ -61,6 +64,7 @@ function getInitialConfig() {
     closedPercentage: 71,
     cardNumber: "4874 1000 3205 4507",
     donateSiteUrl: "https://donate.krrigalerts.pp.ua/",
+    reportUrl: "https://t.me/krrigalerts",
   };
 }
 
@@ -247,7 +251,11 @@ export default async function handler(req: any, res: any) {
       closedGoalUah: config.closedGoalUah || goalUah,
       closedPercentage: config.closedPercentage || percentage,
       cardNumber: config.cardNumber || "4874 1000 3205 4507",
+      cardNumbers: config.cardNumbers || [config.cardNumber || "4874 1000 3205 4507"],
       donateSiteUrl: config.donateSiteUrl || "https://donate.krrigalerts.pp.ua/",
+      reportUrl: config.reportUrl || "https://t.me/krrigalerts",
+      showReportUrl: config.showReportUrl !== undefined ? Boolean(config.showReportUrl) : true,
+      closedGratitudeTitle: config.closedGratitudeTitle || "Дякуємо за допомогу!",
     },
     parsed: {
       jarUrl: `https://send.monobank.ua/jar/${jarSendId}`,
@@ -267,7 +275,11 @@ export default async function handler(req: any, res: any) {
       closedGoalUah: config.closedGoalUah || goalUah,
       closedPercentage: config.closedPercentage || percentage,
       cardNumber: config.cardNumber || "4874 1000 3205 4507",
+      cardNumbers: config.cardNumbers || [config.cardNumber || "4874 1000 3205 4507"],
       donateSiteUrl: config.donateSiteUrl || "https://donate.krrigalerts.pp.ua/",
+      reportUrl: config.reportUrl || "https://t.me/krrigalerts",
+      showReportUrl: config.showReportUrl !== undefined ? Boolean(config.showReportUrl) : true,
+      closedGratitudeTitle: config.closedGratitudeTitle || "Дякуємо за допомогу!",
     },
     donations,
   });

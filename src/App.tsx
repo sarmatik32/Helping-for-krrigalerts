@@ -48,8 +48,12 @@ const DEFAULT_JAR_DATA: MonobankApiResponse = {
     closedGoalUah: 45000,
     closedPercentage: 71,
     cardNumber: "4874 1000 3205 4507",
+    cardNumbers: ["4874 1000 3205 4507"],
     donateSiteUrl: "https://donate.krrigalerts.pp.ua/",
-    updatedAt: new Date().toISOString(),
+    reportUrl: "https://t.me/krrigalerts",
+    showReportUrl: false,
+    closedGratitudeTitle: "Дякуємо за допомогу!",
+    updatedAt: "2026-10-08T06:00:00.000Z",
   },
   parsed: {
     jarUrl: "https://send.monobank.ua/jar/8cNidLyYfj",
@@ -81,13 +85,17 @@ const DEFAULT_JAR_DATA: MonobankApiResponse = {
     closedGoalUah: 45000,
     closedPercentage: 71,
     cardNumber: "4874 1000 3205 4507",
+    cardNumbers: ["4874 1000 3205 4507"],
     donateSiteUrl: "https://donate.krrigalerts.pp.ua/",
+    reportUrl: "https://t.me/krrigalerts",
+    showReportUrl: false,
+    closedGratitudeTitle: "Дякуємо за допомогу!",
     ownerName: "Артем Г.",
   },
   donations: [],
 };
 
-const CACHE_STORAGE_KEY = "mono_jar_local_data_v6";
+const CACHE_STORAGE_KEY = "mono_jar_local_data_v7";
 
 const getInitialData = (): MonobankApiResponse => {
   try {
@@ -98,6 +106,7 @@ const getInitialData = (): MonobankApiResponse => {
       "mono_jar_local_data_v3",
       "mono_jar_local_data_v4",
       "mono_jar_local_data_v5",
+      "mono_jar_local_data_v6",
     ].forEach((key) => {
       localStorage.removeItem(key);
     });
@@ -138,40 +147,22 @@ export default function App() {
         const result: MonobankApiResponse = await res.json();
         if (result && result.parsed) {
           setMonoApiResponse((prev) => {
-            const prevUpdated = prev.rawMonobankResponse?.updatedAt
-              ? new Date(prev.rawMonobankResponse.updatedAt).getTime()
-              : 0;
-            const newUpdated = result.rawMonobankResponse?.updatedAt
-              ? new Date(result.rawMonobankResponse.updatedAt).getTime()
-              : 0;
-
-            const useServerText = newUpdated >= prevUpdated;
-
             const merged: MonobankApiResponse = {
               ...prev,
               ...result,
               rawMonobankResponse: {
+                ...prev.rawMonobankResponse,
                 ...result.rawMonobankResponse,
-                closedReportText: useServerText
-                  ? (result.rawMonobankResponse?.closedReportText || prev.rawMonobankResponse?.closedReportText)
-                  : prev.rawMonobankResponse?.closedReportText,
-                closedReportTitle: useServerText
-                  ? (result.rawMonobankResponse?.closedReportTitle || prev.rawMonobankResponse?.closedReportTitle)
-                  : prev.rawMonobankResponse?.closedReportTitle,
-                ownerName: result.rawMonobankResponse?.ownerName || prev.rawMonobankResponse?.ownerName || "Артем Г.",
+                cardNumbers: result.rawMonobankResponse?.cardNumbers || prev.rawMonobankResponse?.cardNumbers,
+                showReportUrl: result.rawMonobankResponse?.showReportUrl !== undefined ? result.rawMonobankResponse.showReportUrl : prev.rawMonobankResponse?.showReportUrl,
+                closedGratitudeTitle: result.rawMonobankResponse?.closedGratitudeTitle || prev.rawMonobankResponse?.closedGratitudeTitle,
               },
               parsed: {
                 ...prev.parsed,
                 ...result.parsed,
-                balanceUah: result.parsed.balanceUah || prev.parsed.balanceUah,
-                goalUah: result.parsed.goalUah || prev.parsed.goalUah,
-                closedReportText: useServerText
-                  ? (result.parsed?.closedReportText || prev.parsed?.closedReportText)
-                  : prev.parsed?.closedReportText,
-                closedReportTitle: useServerText
-                  ? (result.parsed?.closedReportTitle || prev.parsed?.closedReportTitle)
-                  : prev.parsed?.closedReportTitle,
-                ownerName: result.parsed?.ownerName || prev.parsed?.ownerName || "Артем Г.",
+                cardNumbers: result.parsed?.cardNumbers || prev.parsed?.cardNumbers,
+                showReportUrl: result.parsed?.showReportUrl !== undefined ? result.parsed.showReportUrl : prev.parsed?.showReportUrl,
+                closedGratitudeTitle: result.parsed?.closedGratitudeTitle || prev.parsed?.closedGratitudeTitle,
               },
               donations: result.donations && result.donations.length > 0 ? result.donations : prev.donations,
             };
@@ -230,11 +221,15 @@ export default function App() {
         closedAt: updatedFields.closedAt !== undefined ? updatedFields.closedAt : monoApiResponse.rawMonobankResponse.closedAt,
         closedReportTitle: updatedFields.closedReportTitle !== undefined ? updatedFields.closedReportTitle : monoApiResponse.rawMonobankResponse.closedReportTitle,
         closedReportText: updatedFields.closedReportText !== undefined ? updatedFields.closedReportText : monoApiResponse.rawMonobankResponse.closedReportText,
+        closedGratitudeTitle: updatedFields.closedGratitudeTitle !== undefined ? updatedFields.closedGratitudeTitle : monoApiResponse.rawMonobankResponse.closedGratitudeTitle,
         closedBalanceUah: snapBal,
         closedGoalUah: snapGoal,
         closedPercentage: snapPct,
         cardNumber: updatedFields.cardNumber !== undefined ? updatedFields.cardNumber : monoApiResponse.rawMonobankResponse.cardNumber,
+        cardNumbers: updatedFields.cardNumbers !== undefined ? updatedFields.cardNumbers : monoApiResponse.rawMonobankResponse.cardNumbers,
         donateSiteUrl: updatedFields.donateSiteUrl !== undefined ? updatedFields.donateSiteUrl : monoApiResponse.rawMonobankResponse.donateSiteUrl,
+        reportUrl: updatedFields.reportUrl !== undefined ? updatedFields.reportUrl : monoApiResponse.rawMonobankResponse.reportUrl,
+        showReportUrl: updatedFields.showReportUrl !== undefined ? updatedFields.showReportUrl : monoApiResponse.rawMonobankResponse.showReportUrl,
         ownerName: updatedFields.ownerName !== undefined ? updatedFields.ownerName : monoApiResponse.rawMonobankResponse.ownerName,
         updatedAt: nowIso,
       },
@@ -252,11 +247,15 @@ export default function App() {
         closedAt: updatedFields.closedAt !== undefined ? updatedFields.closedAt : monoApiResponse.parsed.closedAt,
         closedReportTitle: updatedFields.closedReportTitle !== undefined ? updatedFields.closedReportTitle : monoApiResponse.parsed.closedReportTitle,
         closedReportText: updatedFields.closedReportText !== undefined ? updatedFields.closedReportText : monoApiResponse.parsed.closedReportText,
+        closedGratitudeTitle: updatedFields.closedGratitudeTitle !== undefined ? updatedFields.closedGratitudeTitle : monoApiResponse.parsed.closedGratitudeTitle,
         closedBalanceUah: snapBal,
         closedGoalUah: snapGoal,
         closedPercentage: snapPct,
         cardNumber: updatedFields.cardNumber !== undefined ? updatedFields.cardNumber : monoApiResponse.parsed.cardNumber,
+        cardNumbers: updatedFields.cardNumbers !== undefined ? updatedFields.cardNumbers : monoApiResponse.parsed.cardNumbers,
         donateSiteUrl: updatedFields.donateSiteUrl !== undefined ? updatedFields.donateSiteUrl : monoApiResponse.parsed.donateSiteUrl,
+        reportUrl: updatedFields.reportUrl !== undefined ? updatedFields.reportUrl : monoApiResponse.parsed.reportUrl,
+        showReportUrl: updatedFields.showReportUrl !== undefined ? updatedFields.showReportUrl : monoApiResponse.parsed.showReportUrl,
         ownerName: updatedFields.ownerName !== undefined ? updatedFields.ownerName : monoApiResponse.parsed.ownerName,
       },
     };

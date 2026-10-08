@@ -16,7 +16,11 @@ export interface RawMonobankResponse {
   closedGoalUah?: number;
   closedPercentage?: number;
   cardNumber?: string;
+  cardNumbers?: string[];
   donateSiteUrl?: string;
+  reportUrl?: string;
+  showReportUrl?: boolean;
+  closedGratitudeTitle?: string;
 }
 
 export interface ParsedMonobankData {
@@ -37,7 +41,11 @@ export interface ParsedMonobankData {
   closedGoalUah?: number;
   closedPercentage?: number;
   cardNumber?: string;
+  cardNumbers?: string[];
   donateSiteUrl?: string;
+  reportUrl?: string;
+  showReportUrl?: boolean;
+  closedGratitudeTitle?: string;
   ownerName?: string;
 }
 

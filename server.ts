@@ -46,6 +46,7 @@ let jarApiState = {
   closedPercentage: 71,
   cardNumber: "4874 1000 3205 4507",
   donateSiteUrl: "https://donate.krrigalerts.pp.ua/",
+  reportUrl: "https://t.me/krrigalerts",
   updatedAt: new Date().toISOString()
 };
 
@@ -69,6 +70,18 @@ function saveConfig() {
   }
 }
 
+// Function to reload config from file if updated externally
+function reloadConfigFromFile() {
+  if (fs.existsSync(CONFIG_FILE)) {
+    try {
+      const saved = JSON.parse(fs.readFileSync(CONFIG_FILE, "utf-8"));
+      jarApiState = { ...jarApiState, ...saved };
+    } catch (e) {
+      console.error("Failed to reload jar-config.json:", e);
+    }
+  }
+}
+
 // Recent donations list (populated dynamically from Monobank API statement)
 let recentDonations: any[] = [];
 let lastFetchTimestamp = 0;
@@ -76,7 +89,9 @@ const CACHE_TTL_MS = 60000;
 
 // API: Fetch Monobank Jar API Data
 app.get("/api/mono/jar-info", async (req, res) => {
-  res.setHeader("Cache-Control", "public, s-maxage=60, stale-while-revalidate=120");
+  // Always ensure fresh data from root jar-config.json
+  reloadConfigFromFile();
+  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
   const { jarId, token, force } = req.query;
   const targetToken = (token as string) || process.env.MONOBANK_TOKEN || jarApiState.monobankToken;
   const activeJarId = (jarId as string) || jarApiState.id;
@@ -229,7 +244,11 @@ app.get("/api/mono/jar-info", async (req, res) => {
         closedGoalUah: (jarApiState as any).closedGoalUah || goalUah,
         closedPercentage: (jarApiState as any).closedPercentage || Math.min(100, Math.round((balanceUah / (goalUah || 1)) * 100)),
         cardNumber: (jarApiState as any).cardNumber || "4874 1000 3205 4507",
+        cardNumbers: (jarApiState as any).cardNumbers || [(jarApiState as any).cardNumber || "4874 1000 3205 4507"],
         donateSiteUrl: (jarApiState as any).donateSiteUrl || "https://donate.krrigalerts.pp.ua/",
+        reportUrl: (jarApiState as any).reportUrl || "https://t.me/krrigalerts",
+        showReportUrl: (jarApiState as any).showReportUrl !== undefined ? Boolean((jarApiState as any).showReportUrl) : true,
+        closedGratitudeTitle: (jarApiState as any).closedGratitudeTitle || "Дякуємо за допомогу!",
       },
       parsed: {
         jarUrl: jarApiState.jarUrl,
@@ -249,7 +268,11 @@ app.get("/api/mono/jar-info", async (req, res) => {
         closedGoalUah: (jarApiState as any).closedGoalUah || goalUah,
         closedPercentage: (jarApiState as any).closedPercentage || Math.min(100, Math.round((balanceUah / (goalUah || 1)) * 100)),
         cardNumber: (jarApiState as any).cardNumber || "4874 1000 3205 4507",
+        cardNumbers: (jarApiState as any).cardNumbers || [(jarApiState as any).cardNumber || "4874 1000 3205 4507"],
         donateSiteUrl: (jarApiState as any).donateSiteUrl || "https://donate.krrigalerts.pp.ua/",
+        reportUrl: (jarApiState as any).reportUrl || "https://t.me/krrigalerts",
+        showReportUrl: (jarApiState as any).showReportUrl !== undefined ? Boolean((jarApiState as any).showReportUrl) : true,
+        closedGratitudeTitle: (jarApiState as any).closedGratitudeTitle || "Дякуємо за допомогу!",
       },
       donations: recentDonations
     });
@@ -261,7 +284,31 @@ app.get("/api/mono/jar-info", async (req, res) => {
 
 // API: Update Monobank Jar settings
 app.post("/api/mono/jar-update", (req, res) => {
-  const { adminPassword, jarId, jarUrl, title, description, balanceUah, goalUah, monobankToken, logoUrl, isClosed, closedAt, closedReportTitle, closedReportText, closedBalanceUah, closedGoalUah, closedPercentage, cardNumber, donateSiteUrl, ownerName } = req.body;
+  const {
+    adminPassword,
+    jarId,
+    jarUrl,
+    title,
+    description,
+    balanceUah,
+    goalUah,
+    monobankToken,
+    logoUrl,
+    isClosed,
+    closedAt,
+    closedReportTitle,
+    closedReportText,
+    closedGratitudeTitle,
+    closedBalanceUah,
+    closedGoalUah,
+    closedPercentage,
+    cardNumber,
+    cardNumbers,
+    donateSiteUrl,
+    reportUrl,
+    showReportUrl,
+    ownerName,
+  } = req.body;
 
   const inputHash = crypto.createHash("sha256").update(String(adminPassword || "")).digest("hex");
   const envHash = process.env.ADMIN_PASSWORD_HASH;
@@ -305,8 +352,26 @@ app.post("/api/mono/jar-update", (req, res) => {
   else if (isClosed && !(jarApiState as any).closedGoalUah) (jarApiState as any).closedGoalUah = Math.round(jarApiState.goal / 100);
   if (closedPercentage !== undefined) (jarApiState as any).closedPercentage = Number(closedPercentage);
   else if (isClosed && !(jarApiState as any).closedPercentage) (jarApiState as any).closedPercentage = Math.round(((jarApiState.balance / 100) / (jarApiState.goal / 100 || 1)) * 100);
-  if (cardNumber !== undefined) (jarApiState as any).cardNumber = cardNumber.trim();
+  if (cardNumber !== undefined) {
+    (jarApiState as any).cardNumber = cardNumber.trim();
+    if (cardNumbers === undefined && !(jarApiState as any).cardNumbers) {
+      (jarApiState as any).cardNumbers = [cardNumber.trim()];
+    }
+  }
+  if (cardNumbers !== undefined) {
+    if (Array.isArray(cardNumbers)) {
+      (jarApiState as any).cardNumbers = cardNumbers.map((c: string) => String(c).trim()).filter(Boolean);
+    } else if (typeof cardNumbers === "string") {
+      (jarApiState as any).cardNumbers = cardNumbers.split(/[\n,]+/).map((s: string) => s.trim()).filter(Boolean);
+    }
+    if ((jarApiState as any).cardNumbers && (jarApiState as any).cardNumbers.length > 0) {
+      (jarApiState as any).cardNumber = (jarApiState as any).cardNumbers[0];
+    }
+  }
   if (donateSiteUrl !== undefined) (jarApiState as any).donateSiteUrl = donateSiteUrl.trim();
+  if (reportUrl !== undefined) (jarApiState as any).reportUrl = reportUrl.trim();
+  if (showReportUrl !== undefined) (jarApiState as any).showReportUrl = Boolean(showReportUrl);
+  if (closedGratitudeTitle !== undefined) (jarApiState as any).closedGratitudeTitle = closedGratitudeTitle.trim();
   if (ownerName !== undefined && ownerName.trim() !== "") jarApiState.ownerName = ownerName.trim();
   jarApiState.updatedAt = new Date().toISOString();
 

@@ -48,8 +48,26 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
   const [cardNumber, setCardNumber] = useState<string>(
     parsed.cardNumber || raw.cardNumber || "4874 1000 3205 4507"
   );
+  const initialCardsList = (parsed.cardNumbers && parsed.cardNumbers.length > 0)
+    ? parsed.cardNumbers.join("\n")
+    : (raw.cardNumbers && raw.cardNumbers.length > 0)
+      ? raw.cardNumbers.join("\n")
+      : (parsed.cardNumber || raw.cardNumber || "4874 1000 3205 4507");
+  const [cardNumbersInput, setCardNumbersInput] = useState<string>(initialCardsList);
+
   const [donateSiteUrl, setDonateSiteUrl] = useState<string>(
     parsed.donateSiteUrl || raw.donateSiteUrl || "https://donate.krrigalerts.pp.ua/"
+  );
+  const [reportUrl, setReportUrl] = useState<string>(
+    parsed.reportUrl || raw.reportUrl || "https://t.me/krrigalerts"
+  );
+  const [showReportUrl, setShowReportUrl] = useState<boolean>(
+    parsed.showReportUrl !== undefined
+      ? Boolean(parsed.showReportUrl)
+      : (raw.showReportUrl !== undefined ? Boolean(raw.showReportUrl) : false)
+  );
+  const [closedGratitudeTitle, setClosedGratitudeTitle] = useState<string>(
+    parsed.closedGratitudeTitle || raw.closedGratitudeTitle || "Дякуємо за допомогу!"
   );
   const [savedSuccess, setSavedSuccess] = useState(false);
 
@@ -68,17 +86,34 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
       setClosedReportText(
         parsed.closedReportText || raw.closedReportText || ""
       );
+      setClosedGratitudeTitle(
+        parsed.closedGratitudeTitle || raw.closedGratitudeTitle || "Дякуємо за допомогу!"
+      );
       setClosedBalanceUah(
         (parsed.closedBalanceUah || parsed.balanceUah || "").toString()
       );
       setClosedGoalUah(
         (parsed.closedGoalUah || parsed.goalUah || "").toString()
       );
+      const syncedCards = (parsed.cardNumbers && parsed.cardNumbers.length > 0)
+        ? parsed.cardNumbers.join("\n")
+        : (raw.cardNumbers && raw.cardNumbers.length > 0)
+          ? raw.cardNumbers.join("\n")
+          : (parsed.cardNumber || raw.cardNumber || "4874 1000 3205 4507");
+      setCardNumbersInput(syncedCards);
       setCardNumber(
         parsed.cardNumber || raw.cardNumber || "4874 1000 3205 4507"
       );
       setDonateSiteUrl(
         parsed.donateSiteUrl || raw.donateSiteUrl || "https://donate.krrigalerts.pp.ua/"
+      );
+      setReportUrl(
+        parsed.reportUrl || raw.reportUrl || "https://t.me/krrigalerts"
+      );
+      setShowReportUrl(
+        parsed.showReportUrl !== undefined
+          ? Boolean(parsed.showReportUrl)
+          : (raw.showReportUrl !== undefined ? Boolean(raw.showReportUrl) : false)
       );
     }
   }, [isOpen, parsed, raw]);
@@ -124,6 +159,12 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
     const snapGoal = Number(closedGoalUah) || Number(goalUah) || 0;
     const snapPct = snapGoal > 0 ? Math.round((snapBal / snapGoal) * 100) : 100;
 
+    const parsedCards = cardNumbersInput
+      .split(/[\n,]+/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const primaryCard = parsedCards[0] || cardNumber.trim() || "4874 1000 3205 4507";
+
     onSave({
       adminPassword: inputPassword,
       jarUrl,
@@ -136,12 +177,16 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
       isClosed,
       closedReportTitle,
       closedReportText,
+      closedGratitudeTitle: closedGratitudeTitle.trim(),
       closedBalanceUah: snapBal,
       closedGoalUah: snapGoal,
       closedPercentage: snapPct,
       closedAt: isClosed ? (parsed.closedAt || new Date().toISOString()) : "",
-      cardNumber: cardNumber.trim(),
+      cardNumber: primaryCard,
+      cardNumbers: parsedCards.length > 0 ? parsedCards : [primaryCard],
       donateSiteUrl: donateSiteUrl.trim(),
+      reportUrl: reportUrl.trim(),
+      showReportUrl,
       ownerName: ownerName.trim(),
     });
 
@@ -373,6 +418,19 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
                           )}
                         </div>
 
+                        <div className="pt-2">
+                          <label className="text-slate-300 font-semibold block mb-1 text-xs">
+                            Заголовок блоку подяки (великий текст):
+                          </label>
+                          <input
+                            type="text"
+                            value={closedGratitudeTitle}
+                            onChange={(e) => setClosedGratitudeTitle(e.target.value)}
+                            placeholder="Дякуємо за допомогу!"
+                            className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white font-bold text-xs focus:outline-none focus:border-amber-500"
+                          />
+                        </div>
+
                         <div className="grid grid-cols-2 gap-3 pt-2">
                           <div>
                             <label className="text-slate-300 font-semibold block mb-1">
@@ -400,35 +458,99 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
                           </div>
                         </div>
 
-                        <div className="space-y-3 pt-2 border-t border-slate-800/80">
-                          <div>
-                            <label className="text-slate-300 font-semibold block mb-1 text-xs">
-                              Номер карти Monobank для донатів (з можливістю копіювання):
-                            </label>
-                            <input
-                              type="text"
-                              value={cardNumber}
-                              onChange={(e) => setCardNumber(e.target.value)}
-                              placeholder="4874 1000 3205 4507"
-                              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white font-mono text-xs focus:outline-none focus:border-amber-500"
-                            />
+                        {/* Перемикач відображення посилання на звіт */}
+                        <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2.5">
+                          <div className="flex items-center justify-between gap-3">
+                            <div>
+                              <label className="text-slate-200 font-bold block text-xs">
+                                Відображати посилання на звіт у Telegram
+                              </label>
+                              <span className="text-[11px] text-slate-400 block">
+                                Можливість вимикати або вмикати показ посилання на звіт
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setShowReportUrl(!showReportUrl)}
+                              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer shrink-0 ${
+                                showReportUrl ? "bg-sky-500" : "bg-slate-700"
+                              }`}
+                              title={showReportUrl ? "Вимкнути показ посилання на звіт" : "Увімкнути показ посилання на звіт"}
+                            >
+                              <span
+                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                  showReportUrl ? "translate-x-6" : "translate-x-1"
+                                }`}
+                              />
+                            </button>
                           </div>
 
-                          <div>
-                            <label className="text-slate-300 font-semibold block mb-1 text-xs">
-                              Посилання для кнопки переходу на сайт донатів:
-                            </label>
-                            <input
-                              type="text"
-                              value={donateSiteUrl}
-                              onChange={(e) => setDonateSiteUrl(e.target.value)}
-                              placeholder="https://donate.krrigalerts.pp.ua/"
-                              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white font-mono text-xs focus:outline-none focus:border-amber-500"
-                            />
-                          </div>
+                          {showReportUrl ? (
+                            <div className="pt-2 border-t border-slate-800/80">
+                              <label className="text-sky-300 font-semibold block mb-1 text-xs flex items-center justify-between">
+                                <span>Посилання на пост звіту (Telegram):</span>
+                                <span className="text-[10px] text-emerald-400 font-mono font-bold">● Увімкнено</span>
+                              </label>
+                              <input
+                                type="text"
+                                value={reportUrl}
+                                onChange={(e) => setReportUrl(e.target.value)}
+                                placeholder="https://t.me/krrigalerts/..."
+                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono text-xs focus:outline-none focus:border-sky-500"
+                              />
+                              <span className="text-[10px] text-slate-400 mt-1 block">
+                                Відображається під написом «Збір закрито» та окремою кнопкою в блоці дій
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="p-2 rounded-lg bg-slate-900/60 border border-slate-800 text-[11px] text-amber-300/80 flex items-center gap-1.5 font-medium">
+                              <span>Показ посилання на звіт на сайті повністю вимкнено (приховано).</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
+                  </div>
+
+                  {/* РЕКВІЗИТИ: КАРТКИ ТА САЙТ ДОНАТІВ (доступні завжди) */}
+                  <div className="p-4 bg-slate-950/70 border border-slate-800 rounded-xl space-y-3">
+                    <div className="text-xs font-bold text-amber-400 uppercase tracking-wider font-mono flex items-center gap-1.5">
+                      <CreditCard className="w-3.5 h-3.5" />
+                      <span>Реквізити та посилання для швидкого редагування</span>
+                    </div>
+
+                    <div>
+                      <label className="text-slate-300 font-semibold block mb-1 text-xs">
+                        Номери карток для донатів (з можливістю швидкого копіювання):
+                      </label>
+                      <textarea
+                        rows={2}
+                        value={cardNumbersInput}
+                        onChange={(e) => {
+                          setCardNumbersInput(e.target.value);
+                          const first = e.target.value.split(/[\n,]+/)[0]?.trim();
+                          if (first) setCardNumber(first);
+                        }}
+                        placeholder="4874 1000 3205 4507"
+                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-white font-mono text-xs focus:outline-none focus:border-amber-500 leading-relaxed"
+                      />
+                      <span className="text-[10px] text-slate-400 mt-1 block">
+                        Введіть одну або кілька карток (з нового рядка або через кому). Всі вони відображатимуться зі зручною кнопкою копіювання.
+                      </span>
+                    </div>
+
+                    <div>
+                      <label className="text-slate-300 font-semibold block mb-1 text-xs">
+                        Посилання для кнопки переходу на сайт донатів:
+                      </label>
+                      <input
+                        type="text"
+                        value={donateSiteUrl}
+                        onChange={(e) => setDonateSiteUrl(e.target.value)}
+                        placeholder="https://donate.krrigalerts.pp.ua/"
+                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-white font-mono text-xs focus:outline-none focus:border-amber-500"
+                      />
+                    </div>
                   </div>
 
                   <div>

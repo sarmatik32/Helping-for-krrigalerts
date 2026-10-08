@@ -40,7 +40,11 @@ export default async function handler(req: any, res: any) {
     closedGoalUah,
     closedPercentage,
     cardNumber,
+    cardNumbers,
     donateSiteUrl,
+    reportUrl,
+    showReportUrl,
+    closedGratitudeTitle,
     ownerName,
   } = req.body || {};
 
@@ -93,23 +97,29 @@ export default async function handler(req: any, res: any) {
       closedGoalUah: closedGoalUah !== undefined ? Number(closedGoalUah) : (currentConfig.closedGoalUah || (goalUah !== undefined ? Number(goalUah) : Math.round((currentConfig.goal || 0) / 100))),
       closedPercentage: closedPercentage !== undefined ? Number(closedPercentage) : currentConfig.closedPercentage,
       cardNumber: cardNumber !== undefined ? cardNumber : currentConfig.cardNumber,
+      cardNumbers: cardNumbers !== undefined 
+        ? (Array.isArray(cardNumbers) ? cardNumbers : String(cardNumbers).split(/[\n,]+/).map((s: string) => s.trim()).filter(Boolean))
+        : (currentConfig.cardNumbers || (cardNumber ? [cardNumber] : ["4874 1000 3205 4507"])),
       donateSiteUrl: donateSiteUrl !== undefined ? donateSiteUrl : currentConfig.donateSiteUrl,
+      reportUrl: reportUrl !== undefined ? reportUrl : currentConfig.reportUrl,
+      showReportUrl: showReportUrl !== undefined ? Boolean(showReportUrl) : (currentConfig.showReportUrl !== undefined ? currentConfig.showReportUrl : true),
+      closedGratitudeTitle: closedGratitudeTitle !== undefined ? closedGratitudeTitle : (currentConfig.closedGratitudeTitle || "Дякуємо за допомогу!"),
       ownerName: ownerName !== undefined ? ownerName : currentConfig.ownerName,
       updatedAt: new Date().toISOString(),
     };
 
-    // 1. Always write to /tmp for serverless runtime persistence
+    // 1. Write directly to root jar-config.json first!
+    try {
+      fs.writeFileSync(configPath, JSON.stringify(updatedConfig, null, 2), "utf8");
+    } catch (err: any) {
+      console.warn("Could not write jar-config.json:", err);
+    }
+
+    // 2. Also write to /tmp for serverless runtime persistence
     try {
       fs.writeFileSync(TEMP_CACHE_FILE, JSON.stringify(updatedConfig, null, 2), "utf8");
     } catch (e) {
       console.warn("Could not write /tmp cache:", e);
-    }
-
-    // 2. Write to project jar-config.json if filesystem permits
-    try {
-      fs.writeFileSync(configPath, JSON.stringify(updatedConfig, null, 2), "utf8");
-    } catch (err: any) {
-      // Ignore read-only errors on serverless environments
     }
 
     return res.status(200).json({

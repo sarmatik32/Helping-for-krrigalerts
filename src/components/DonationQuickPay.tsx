@@ -6,19 +6,30 @@ import { ParsedMonobankData, RawMonobankResponse } from "../types";
 
 interface DonationQuickPayProps {
   parsed: ParsedMonobankData;
-  raw: RawMonobankResponse;
+  raw?: RawMonobankResponse;
 }
 
-const CARD_NUMBER = "4874 1000 3205 4507";
-const CARD_NUMBER_RAW = "4874100032054507";
-
-export const DonationQuickPay: React.FC<DonationQuickPayProps> = ({ parsed }) => {
+export const DonationQuickPay: React.FC<DonationQuickPayProps> = ({ parsed, raw }) => {
   const [selectedAmount, setSelectedAmount] = useState<number>(200);
   const [customAmount, setCustomAmount] = useState<string>("200");
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
   const [showQrModal, setShowQrModal] = useState<boolean>(false);
   const [copiedLink, setCopiedLink] = useState<boolean>(false);
-  const [copiedCard, setCopiedCard] = useState<boolean>(false);
+  const [copiedCardIndex, setCopiedCardIndex] = useState<number | null>(null);
+
+  const cardsList: string[] = (parsed.cardNumbers && parsed.cardNumbers.length > 0)
+    ? parsed.cardNumbers
+    : (raw?.cardNumbers && raw.cardNumbers.length > 0)
+      ? raw.cardNumbers
+      : (parsed.cardNumber || raw?.cardNumber || "4874 1000 3205 4507")
+        .split(/[\n,]+/)
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+  const formatCard = (num: string) => {
+    const rawDigits = num.replace(/\s+/g, "");
+    return rawDigits.replace(/(\d{4})/g, "$1 ").trim();
+  };
 
   const isClosed = Boolean(parsed.isClosed);
   const activeAmount = Number(customAmount) > 0 ? Number(customAmount) : selectedAmount;
@@ -57,10 +68,11 @@ export const DonationQuickPay: React.FC<DonationQuickPayProps> = ({ parsed }) =>
     setTimeout(() => setCopiedLink(false), 2000);
   };
 
-  const copyCardNumber = () => {
-    navigator.clipboard.writeText(CARD_NUMBER_RAW);
-    setCopiedCard(true);
-    setTimeout(() => setCopiedCard(false), 2000);
+  const copyCardNumber = (cNum: string, idx: number) => {
+    const rawDigits = cNum.replace(/\s+/g, "");
+    navigator.clipboard.writeText(rawDigits);
+    setCopiedCardIndex(idx);
+    setTimeout(() => setCopiedCardIndex(null), 2000);
   };
 
   return (
@@ -114,39 +126,51 @@ export const DonationQuickPay: React.FC<DonationQuickPayProps> = ({ parsed }) =>
         )}
 
         {/* Card Number Copy Section */}
-        <div className="mt-4 p-3.5 bg-slate-950/90 border border-slate-800 rounded-xl flex items-center justify-between gap-3 shadow-inner">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className={`p-2.5 rounded-lg ${
-              isClosed ? "bg-amber-500/10 border border-amber-500/20 text-amber-400" : "bg-sky-500/10 border border-sky-500/20 text-sky-400"
-            } shrink-0`}>
-              <CreditCard className="w-5 h-5" />
-            </div>
-            <div className="min-w-0">
-              <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wider font-semibold">
-                Номер карти для переказу:
-              </div>
-              <div className="text-base sm:text-lg font-black tracking-wider text-white font-mono truncate">
-                {CARD_NUMBER}
-              </div>
-            </div>
-          </div>
+        <div className="mt-4 space-y-2">
+          {cardsList.map((cNum, idx) => {
+            const isCopied = copiedCardIndex === idx;
+            const formatted = formatCard(cNum);
+            return (
+              <div
+                key={idx}
+                className="p-3.5 bg-slate-950/90 border border-slate-800 rounded-xl flex items-center justify-between gap-3 shadow-inner"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className={`p-2.5 rounded-lg ${
+                    isClosed ? "bg-amber-500/10 border border-amber-500/20 text-amber-400" : "bg-sky-500/10 border border-sky-500/20 text-sky-400"
+                  } shrink-0`}>
+                    <CreditCard className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wider font-semibold">
+                      {cardsList.length > 1 ? `Картка #${idx + 1} для переказу:` : "Номер карти для переказу:"}
+                    </div>
+                    <div className="text-base sm:text-lg font-black tracking-wider text-white font-mono truncate">
+                      {formatted}
+                    </div>
+                  </div>
+                </div>
 
-          <button
-            onClick={copyCardNumber}
-            className="py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-sky-300 hover:text-white font-bold text-xs flex items-center gap-1.5 border border-slate-700 transition-colors shrink-0 cursor-pointer"
-          >
-            {copiedCard ? (
-              <>
-                <Check className="w-4 h-4 text-emerald-400" />
-                <span className="text-emerald-400 font-mono">Скопійовано</span>
-              </>
-            ) : (
-              <>
-                <Copy className="w-4 h-4" />
-                <span className="hidden sm:inline font-mono">Скопіювати</span>
-              </>
-            )}
-          </button>
+                <button
+                  type="button"
+                  onClick={() => copyCardNumber(cNum, idx)}
+                  className="py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-sky-300 hover:text-white font-bold text-xs flex items-center gap-1.5 border border-slate-700 transition-colors shrink-0 cursor-pointer"
+                >
+                  {isCopied ? (
+                    <>
+                      <Check className="w-4 h-4 text-emerald-400" />
+                      <span className="text-emerald-400 font-mono">Скопійовано</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4" />
+                      <span className="hidden sm:inline font-mono">Скопіювати</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            );
+          })}
         </div>
 
         {/* Preset Amount Selector */}
