@@ -112,7 +112,7 @@ export const ProgressSection: React.FC<ProgressSectionProps> = ({
               {isClosed ? "Підсумок збору" : "Прогрес збору"}
             </span>
             <span className={`${isClosed ? "text-amber-300" : "text-cyan-300"} font-bold`}>
-              {isClosed ? "100% виконано · Збір закрито" : `${parsed.percentage}% виконується`}
+              {isClosed ? "Збір закрито" : `${parsed.percentage}% виконується`}
             </span>
           </div>
 

@@ -47,15 +47,20 @@ function getInitialConfig() {
 Якщо ви не маєте змоги підтримати гривнею — дуже просимо про максимальний розголос та репост. Кожна гривня та кожен ваш пошир — це реальний шанс захистити розвідників на передку. Разом до перемоги! 🇺🇦`,
     currencyCode: 980,
     currencyName: "UAH",
-    balance: 1952499,
+    balance: 3184048,
     goal: 4500000,
     ownerName: "Артем Г.",
     monobankToken: "",
     logoUrl: "/logo.png",
-    isClosed: false,
-    closedAt: "",
+    isClosed: true,
+    closedAt: "2026-10-08T05:23:57.297Z",
     closedReportTitle: "Збір успішно завершено! Мета досягнута!",
-    closedReportText: "Щиро дякуємо кожному, хто підтримав наш збір коштами, репостами та теплими словами. Завдяки вашій згуртованості необхідну суму для закупівлі детектора дронів зібрано! Обладнання замовляється та буде передано розвідникам 129 ОБр ТрО на Слов'янський напрямок. Ви неймовірні!",
+    closedReportText: "Збір закриваємо, час вже не на нашому боці, вже **вкрай необхідно**. Закрили потребу, вже здійснили закуп та відправлення на позицію.\nПоки збирали, **Чуйка** випустила **версію 4.0** (яку і купили).\nЗбір, на жаль, будемо закривати на [green]70%[/green], остаточну суму закрили коштами військових та банку.\nСума не ==45к==, а ==60к== — але то вже нюанси. Хоч і чутливі.\n\nДякуємо всім, хто долучився! **Завтра повний звіт.**\nХто ще має бажання долучитися — ще не пізно, будемо вдячні за **кожну гривню** 🫶",
+    closedBalanceUah: 31840,
+    closedGoalUah: 45000,
+    closedPercentage: 71,
+    cardNumber: "4874 1000 3205 4507",
+    donateSiteUrl: "https://donate.krrigalerts.pp.ua/",
   };
 }
 
@@ -71,8 +76,10 @@ export default async function handler(req: any, res: any) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  // Set Edge/CDN caching for 60 seconds with 120 seconds stale-while-revalidate
-  res.setHeader("Cache-Control", "public, s-maxage=60, stale-while-revalidate=120");
+  // Disable edge caching to ensure instant updates across devices
+  res.setHeader("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
 
   if (req.method === "OPTIONS") {
     return res.status(200).end();

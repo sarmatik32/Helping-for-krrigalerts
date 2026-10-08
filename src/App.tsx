@@ -31,9 +31,24 @@ const DEFAULT_JAR_DATA: MonobankApiResponse = {
 
 Якщо ви не маєте змоги підтримати гривнею — дуже просимо про максимальний розголос та репост. Кожна гривня та кожен ваш пошир — це реальний шанс захистити розвідників на передку. Разом до перемоги! 🇺🇦`,
     currencyCode: 980,
-    balance: 1952499,
+    balance: 3184048,
     goal: 4500000,
     ownerName: "Артем Г.",
+    isClosed: true,
+    closedAt: "2026-10-08T05:23:57.297Z",
+    closedReportTitle: "Збір успішно завершено! Мета досягнута!",
+    closedReportText: `Збір закриваємо, час вже не на нашому боці, вже **вкрай необхідно**. Закрили потребу, вже здійснили закуп та відправлення на позицію.
+Поки збирали, **Чуйка** випустила **версію 4.0** (яку і купили).
+Збір, на жаль, будемо закривати на [green]70%[/green], остаточну суму закрили коштами військових та банку.
+Сума не ==45к==, а ==60к== — але то вже нюанси. Хоч і чутливі.
+
+Дякуємо всім, хто долучився! **Завтра повний звіт.**
+Хто ще має бажання долучитися — ще не пізно, будемо вдячні за **кожну гривню** 🫶`,
+    closedBalanceUah: 31840,
+    closedGoalUah: 45000,
+    closedPercentage: 71,
+    cardNumber: "4874 1000 3205 4507",
+    donateSiteUrl: "https://donate.krrigalerts.pp.ua/",
     updatedAt: new Date().toISOString(),
   },
   parsed: {
@@ -46,24 +61,46 @@ const DEFAULT_JAR_DATA: MonobankApiResponse = {
 ⚡️ Від себе: команда адмінів уже вклала перші кошти, щоб запустити збір.
 
 Якщо ви не маєте змоги підтримати гривнею — дуже просимо про максимальний розголос та репост. Кожна гривня та кожен ваш пошир — це реальний шанс захистити розвідників на передку. Разом до перемоги! 🇺🇦`,
-    balanceUah: 19525,
+    balanceUah: 31840,
     goalUah: 45000,
     currency: "UAH",
-    percentage: 43,
-    remainingUah: 25475,
+    percentage: 71,
+    remainingUah: 13160,
     logoUrl: "/logo.png",
+    isClosed: true,
+    closedAt: "2026-10-08T05:23:57.297Z",
+    closedReportTitle: "Збір успішно завершено! Мета досягнута!",
+    closedReportText: `Збір закриваємо, час вже не на нашому боці, вже **вкрай необхідно**. Закрили потребу, вже здійснили закуп та відправлення на позицію.
+Поки збирали, **Чуйка** випустила **версію 4.0** (яку і купили).
+Збір, на жаль, будемо закривати на [green]70%[/green], остаточну суму закрили коштами військових та банку.
+Сума не ==45к==, а ==60к== — але то вже нюанси. Хоч і чутливі.
+
+Дякуємо всім, хто долучився! **Завтра повний звіт.**
+Хто ще має бажання долучитися — ще не пізно, будемо вдячні за **кожну гривню** 🫶`,
+    closedBalanceUah: 31840,
+    closedGoalUah: 45000,
+    closedPercentage: 71,
+    cardNumber: "4874 1000 3205 4507",
+    donateSiteUrl: "https://donate.krrigalerts.pp.ua/",
+    ownerName: "Артем Г.",
   },
   donations: [],
 };
 
-const CACHE_STORAGE_KEY = "mono_jar_local_data_v4";
+const CACHE_STORAGE_KEY = "mono_jar_local_data_v6";
 
 const getInitialData = (): MonobankApiResponse => {
   try {
-    // Clear old legacy keys with outdated 20 UAH state
-    localStorage.removeItem("mono_jar_local_data");
-    localStorage.removeItem("mono_jar_local_data_v2");
-    localStorage.removeItem("mono_jar_local_data_v3");
+    // Clear old legacy keys
+    [
+      "mono_jar_local_data",
+      "mono_jar_local_data_v2",
+      "mono_jar_local_data_v3",
+      "mono_jar_local_data_v4",
+      "mono_jar_local_data_v5",
+    ].forEach((key) => {
+      localStorage.removeItem(key);
+    });
 
     const localSaved = localStorage.getItem(CACHE_STORAGE_KEY);
     if (localSaved) {
@@ -89,33 +126,63 @@ export default function App() {
   // Load Monobank Jar API data with client-side caching & rate-limiting guard
   const fetchMonoJarData = async (force: boolean = false) => {
     const now = Date.now();
-    // Prevent spamming requests within 10 seconds on client
+    // Prevent spamming requests within 10 seconds on client unless forced
     if (!force && lastClientFetch > 0 && now - lastClientFetch < 60000) {
       return;
     }
 
     try {
-      const url = force ? "/api/mono/jar-info?force=true" : "/api/mono/jar-info";
-      const res = await fetch(url);
+      const url = force ? `/api/mono/jar-info?force=true&t=${now}` : `/api/mono/jar-info?t=${now}`;
+      const res = await fetch(url, { cache: "no-store" });
       if (res.ok) {
         const result: MonobankApiResponse = await res.json();
         if (result && result.parsed) {
-          setMonoApiResponse((prev) => ({
-            ...prev,
-            ...result,
-            // Guard against any accidental zero/undefined resets
-            parsed: {
-              ...prev.parsed,
-              ...result.parsed,
-              balanceUah: result.parsed.balanceUah || prev.parsed.balanceUah,
-              goalUah: result.parsed.goalUah || prev.parsed.goalUah,
-            },
-            donations: (result.donations && result.donations.length > 0) ? result.donations : prev.donations,
-          }));
+          setMonoApiResponse((prev) => {
+            const prevUpdated = prev.rawMonobankResponse?.updatedAt
+              ? new Date(prev.rawMonobankResponse.updatedAt).getTime()
+              : 0;
+            const newUpdated = result.rawMonobankResponse?.updatedAt
+              ? new Date(result.rawMonobankResponse.updatedAt).getTime()
+              : 0;
+
+            const useServerText = newUpdated >= prevUpdated;
+
+            const merged: MonobankApiResponse = {
+              ...prev,
+              ...result,
+              rawMonobankResponse: {
+                ...result.rawMonobankResponse,
+                closedReportText: useServerText
+                  ? (result.rawMonobankResponse?.closedReportText || prev.rawMonobankResponse?.closedReportText)
+                  : prev.rawMonobankResponse?.closedReportText,
+                closedReportTitle: useServerText
+                  ? (result.rawMonobankResponse?.closedReportTitle || prev.rawMonobankResponse?.closedReportTitle)
+                  : prev.rawMonobankResponse?.closedReportTitle,
+                ownerName: result.rawMonobankResponse?.ownerName || prev.rawMonobankResponse?.ownerName || "Артем Г.",
+              },
+              parsed: {
+                ...prev.parsed,
+                ...result.parsed,
+                balanceUah: result.parsed.balanceUah || prev.parsed.balanceUah,
+                goalUah: result.parsed.goalUah || prev.parsed.goalUah,
+                closedReportText: useServerText
+                  ? (result.parsed?.closedReportText || prev.parsed?.closedReportText)
+                  : prev.parsed?.closedReportText,
+                closedReportTitle: useServerText
+                  ? (result.parsed?.closedReportTitle || prev.parsed?.closedReportTitle)
+                  : prev.parsed?.closedReportTitle,
+                ownerName: result.parsed?.ownerName || prev.parsed?.ownerName || "Артем Г.",
+              },
+              donations: result.donations && result.donations.length > 0 ? result.donations : prev.donations,
+            };
+
+            try {
+              localStorage.setItem(CACHE_STORAGE_KEY, JSON.stringify(merged));
+            } catch (e) {}
+
+            return merged;
+          });
           setLastClientFetch(now);
-          try {
-            localStorage.setItem(CACHE_STORAGE_KEY, JSON.stringify(result));
-          } catch (e) {}
         }
       }
     } catch (err) {
@@ -136,21 +203,7 @@ export default function App() {
   };
 
   const handleSaveAdminConfig = async (updatedFields: any) => {
-    try {
-      const res = await fetch("/api/mono/jar-update", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedFields),
-      });
-      if (res.ok) {
-        await fetchMonoJarData();
-        return;
-      }
-    } catch (err) {
-      console.warn("Server API not available for update, saving locally:", err);
-    }
-
-    // Local state fallback for admin editing on static deployments
+    // 1. Immediately calculate and apply updated state so text changes instantly in UI!
     const newBalanceUah = Number(updatedFields.balanceUah) || monoApiResponse.parsed.balanceUah;
     const newGoalUah = Number(updatedFields.goalUah) || monoApiResponse.parsed.goalUah;
     const newRemaining = Math.max(0, newGoalUah - newBalanceUah);
@@ -162,6 +215,8 @@ export default function App() {
     const snapPct = updatedFields.closedPercentage !== undefined
       ? Number(updatedFields.closedPercentage)
       : (snapGoal > 0 ? Math.round((snapBal / snapGoal) * 100) : 100);
+
+    const nowIso = new Date().toISOString();
 
     const updatedResponse: MonobankApiResponse = {
       ...monoApiResponse,
@@ -181,6 +236,7 @@ export default function App() {
         cardNumber: updatedFields.cardNumber !== undefined ? updatedFields.cardNumber : monoApiResponse.rawMonobankResponse.cardNumber,
         donateSiteUrl: updatedFields.donateSiteUrl !== undefined ? updatedFields.donateSiteUrl : monoApiResponse.rawMonobankResponse.donateSiteUrl,
         ownerName: updatedFields.ownerName !== undefined ? updatedFields.ownerName : monoApiResponse.rawMonobankResponse.ownerName,
+        updatedAt: nowIso,
       },
       parsed: {
         ...monoApiResponse.parsed,
@@ -206,9 +262,21 @@ export default function App() {
     };
 
     setMonoApiResponse(updatedResponse);
+    setLastClientFetch(Date.now());
     try {
       localStorage.setItem(CACHE_STORAGE_KEY, JSON.stringify(updatedResponse));
     } catch (e) {}
+
+    // 2. Persist to backend server API
+    try {
+      await fetch("/api/mono/jar-update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedFields),
+      });
+    } catch (err) {
+      console.warn("Server API not available for update, saved locally:", err);
+    }
   };
 
   if (isLoading || !monoApiResponse) {

@@ -8,6 +8,8 @@ const ALLOWED_PASSWORD_HASHES = [
   "f2d1d9604cd4655a27d7852f8bd6b763f53423b1cab49223687a0423ab6e80c9", // SHA-256 hash 2
 ];
 
+const TEMP_CACHE_FILE = path.join("/tmp", "mono_jar_cache.json");
+
 export default async function handler(req: any, res: any) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -50,12 +52,20 @@ export default async function handler(req: any, res: any) {
     return res.status(401).json({ success: false, message: "Невірний пароль адміністратора" });
   }
 
-  // Update jar-config.json
+  // Update configuration
   try {
     const configPath = path.join(process.cwd(), "jar-config.json");
     let currentConfig: any = {};
+
+    // First try reading existing config from file or /tmp
     if (fs.existsSync(configPath)) {
-      currentConfig = JSON.parse(fs.readFileSync(configPath, "utf8"));
+      try {
+        currentConfig = JSON.parse(fs.readFileSync(configPath, "utf8"));
+      } catch (e) {}
+    } else if (fs.existsSync(TEMP_CACHE_FILE)) {
+      try {
+        currentConfig = JSON.parse(fs.readFileSync(TEMP_CACHE_FILE, "utf8"));
+      } catch (e) {}
     }
 
     let jarSendId = currentConfig.id || "8cNidLyYfj";
@@ -79,8 +89,8 @@ export default async function handler(req: any, res: any) {
       closedAt: closedAt !== undefined ? closedAt : (isClosed && !currentConfig.closedAt ? new Date().toISOString() : currentConfig.closedAt),
       closedReportTitle: closedReportTitle !== undefined ? closedReportTitle : currentConfig.closedReportTitle,
       closedReportText: closedReportText !== undefined ? closedReportText : currentConfig.closedReportText,
-      closedBalanceUah: closedBalanceUah !== undefined ? Number(closedBalanceUah) : (currentConfig.closedBalanceUah || (balanceUah !== undefined ? Number(balanceUah) : Math.round(currentConfig.balance / 100))),
-      closedGoalUah: closedGoalUah !== undefined ? Number(closedGoalUah) : (currentConfig.closedGoalUah || (goalUah !== undefined ? Number(goalUah) : Math.round(currentConfig.goal / 100))),
+      closedBalanceUah: closedBalanceUah !== undefined ? Number(closedBalanceUah) : (currentConfig.closedBalanceUah || (balanceUah !== undefined ? Number(balanceUah) : Math.round((currentConfig.balance || 0) / 100))),
+      closedGoalUah: closedGoalUah !== undefined ? Number(closedGoalUah) : (currentConfig.closedGoalUah || (goalUah !== undefined ? Number(goalUah) : Math.round((currentConfig.goal || 0) / 100))),
       closedPercentage: closedPercentage !== undefined ? Number(closedPercentage) : currentConfig.closedPercentage,
       cardNumber: cardNumber !== undefined ? cardNumber : currentConfig.cardNumber,
       donateSiteUrl: donateSiteUrl !== undefined ? donateSiteUrl : currentConfig.donateSiteUrl,
@@ -88,11 +98,28 @@ export default async function handler(req: any, res: any) {
       updatedAt: new Date().toISOString(),
     };
 
-    fs.writeFileSync(configPath, JSON.stringify(updatedConfig, null, 2), "utf8");
-    return res.status(200).json({ success: true, message: "Налаштування успішно збережено в jar-config.json", config: updatedConfig });
+    // 1. Always write to /tmp for serverless runtime persistence
+    try {
+      fs.writeFileSync(TEMP_CACHE_FILE, JSON.stringify(updatedConfig, null, 2), "utf8");
+    } catch (e) {
+      console.warn("Could not write /tmp cache:", e);
+    }
+
+    // 2. Write to project jar-config.json if filesystem permits
+    try {
+      fs.writeFileSync(configPath, JSON.stringify(updatedConfig, null, 2), "utf8");
+    } catch (err: any) {
+      // Ignore read-only errors on serverless environments
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Налаштування успішно збережено",
+      config: updatedConfig,
+    });
   } catch (err: any) {
-    console.warn("Could not write jar-config.json:", err);
-    return res.status(200).json({ success: true, message: "Налаштування збережено в пам'яті" });
+    console.warn("Error updating config:", err);
+    return res.status(500).json({ success: false, message: "Помилка збереження" });
   }
 }
 

@@ -53,6 +53,36 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
   );
   const [savedSuccess, setSavedSuccess] = useState(false);
 
+  React.useEffect(() => {
+    if (isOpen) {
+      setJarUrl(parsed.jarUrl || "");
+      setTitle(raw.title || "");
+      setDescription(raw.description || "");
+      setOwnerName(raw.ownerName || parsed.ownerName || "Артем Г.");
+      setBalanceUah((parsed.balanceUah || "").toString());
+      setGoalUah((parsed.goalUah || "").toString());
+      setIsClosed(Boolean(parsed.isClosed ?? raw.isClosed));
+      setClosedReportTitle(
+        parsed.closedReportTitle || raw.closedReportTitle || "Збір успішно завершено! Мета досягнута!"
+      );
+      setClosedReportText(
+        parsed.closedReportText || raw.closedReportText || ""
+      );
+      setClosedBalanceUah(
+        (parsed.closedBalanceUah || parsed.balanceUah || "").toString()
+      );
+      setClosedGoalUah(
+        (parsed.closedGoalUah || parsed.goalUah || "").toString()
+      );
+      setCardNumber(
+        parsed.cardNumber || raw.cardNumber || "4874 1000 3205 4507"
+      );
+      setDonateSiteUrl(
+        parsed.donateSiteUrl || raw.donateSiteUrl || "https://donate.krrigalerts.pp.ua/"
+      );
+    }
+  }, [isOpen, parsed, raw]);
+
   const insertFormatting = (prefix: string, suffix: string = prefix, placeholder: string = "слово") => {
     const textarea = document.getElementById("closedReportTextarea") as HTMLTextAreaElement | null;
     if (!textarea) {
@@ -253,9 +283,9 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
                           <button
                             type="button"
                             onClick={() => {
-                              setClosedReportTitle("Збір успішно завершено! Мета досягнута! 🎯");
+                              setClosedReportTitle("Збір успішно завершено! Мета досягнута!");
                               setClosedReportText(
-                                "Щиро дякуємо кожному, хто підтримав наш збір коштами, репостами та теплими словами! Завдяки вашій неймовірній небайдужості **збір закрито**. Вся сума спрямовується на закупівлю необхідного обладнання для розвідроти на Слов'янському напрямку. Ви — неймовірна сила і **надійний тил наших воїнів**! Разом до перемоги! 🇺🇦"
+                                "Збір закриваємо, час вже не на нашому боці, вже **вкрай необхідно**. Закрили потребу, вже здійснили закуп та відправлення на позицію.\nПоки збирали, **Чуйка** випустила **версію 4.0** (яку і купили).\nЗбір, на жаль, будемо закривати на [green]70%[/green], остаточну суму закрили коштами військових та банку.\nСума не ==45к==, а ==60к== — але то вже нюанси. Хоч і чутливі.\n\nДякуємо всім, хто долучився! **Завтра повний звіт.**\nХто ще має бажання долучитися — ще не пізно, будемо вдячні за **кожну гривню** 🫶"
                               );
                             }}
                             className="text-[10px] text-amber-400 hover:text-amber-300 underline cursor-pointer"

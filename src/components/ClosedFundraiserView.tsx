@@ -151,7 +151,7 @@ export const ClosedFundraiserView: React.FC<ClosedFundraiserViewProps> = ({
                   Отримувач:
                 </span>
                 <span className="text-xs font-semibold text-slate-300 block truncate max-w-[170px] sm:max-w-none">
-                  {raw.ownerName || "Артем Г."}
+                  {raw.ownerName || parsed.ownerName || "Артем Г."}
                 </span>
               </div>
             </div>
