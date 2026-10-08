@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Settings, Save, X, Key, Check, Lock, ShieldAlert, CheckCircle2, Award, Calendar, AlertCircle, Type, Sparkles } from "lucide-react";
+import { Settings, Save, X, Key, Check, Lock, ShieldAlert, CheckCircle2, Award, Calendar, AlertCircle, Type, Sparkles, CreditCard } from "lucide-react";
 import { RawMonobankResponse, ParsedMonobankData } from "../types";
 import { StyledText } from "./StyledText";
 
