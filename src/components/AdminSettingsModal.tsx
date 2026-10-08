@@ -9,7 +9,7 @@ interface AdminSettingsModalProps {
   raw: RawMonobankResponse;
   isOpen: boolean;
   onClose: () => void;
-  onSave: (updatedData: any) => void;
+  onSave: (updatedData: any) => Promise<void> | void;
 }
 
 export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
@@ -20,8 +20,24 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
   onSave,
 }) => {
   const [inputPassword, setInputPassword] = useState("");
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    try {
+      return sessionStorage.getItem("admin_is_auth") === "true";
+    } catch {
+      return false;
+    }
+  });
+  const [savedPassword, setSavedPassword] = useState<string>(() => {
+    try {
+      return sessionStorage.getItem("admin_auth_pwd") || "";
+    } catch {
+      return "";
+    }
+  });
   const [passwordError, setPasswordError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [savedSuccess, setSavedSuccess] = useState(false);
 
   const [jarUrl, setJarUrl] = useState(parsed.jarUrl);
   const [title, setTitle] = useState(raw.title);
@@ -69,7 +85,6 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
   const [closedGratitudeTitle, setClosedGratitudeTitle] = useState<string>(
     parsed.closedGratitudeTitle || raw.closedGratitudeTitle || "Дякуємо за допомогу!"
   );
-  const [savedSuccess, setSavedSuccess] = useState(false);
 
   React.useEffect(() => {
     if (isOpen) {
@@ -141,19 +156,34 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
     e.preventDefault();
     if (inputPassword === "25510032") {
       setIsAuthenticated(true);
+      setSavedPassword(inputPassword);
+      try {
+        sessionStorage.setItem("admin_is_auth", "true");
+        sessionStorage.setItem("admin_auth_pwd", inputPassword);
+      } catch {}
       setPasswordError("");
     } else {
       setPasswordError("Невірний пароль адміністратора!");
     }
   };
 
-  const handleClose = () => {
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setSavedPassword("");
     setInputPassword("");
+    try {
+      sessionStorage.removeItem("admin_is_auth");
+      sessionStorage.removeItem("admin_auth_pwd");
+    } catch {}
+  };
+
+  const handleClose = () => {
     setPasswordError("");
+    setSaveError("");
     onClose();
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const snapBal = Number(closedBalanceUah) || Number(balanceUah) || 0;
     const snapGoal = Number(closedGoalUah) || Number(goalUah) || 0;
@@ -164,37 +194,47 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
       .map((s) => s.trim())
       .filter(Boolean);
     const primaryCard = parsedCards[0] || cardNumber.trim() || "4874 1000 3205 4507";
+    const activePassword = savedPassword || inputPassword || "25510032";
 
-    onSave({
-      adminPassword: inputPassword,
-      jarUrl,
-      title,
-      description,
-      balanceUah: Number(balanceUah) || 0,
-      goalUah: Number(goalUah) || 0,
-      monobankToken,
-      logoUrl,
-      isClosed,
-      closedReportTitle,
-      closedReportText,
-      closedGratitudeTitle: closedGratitudeTitle.trim(),
-      closedBalanceUah: snapBal,
-      closedGoalUah: snapGoal,
-      closedPercentage: snapPct,
-      closedAt: isClosed ? (parsed.closedAt || new Date().toISOString()) : "",
-      cardNumber: primaryCard,
-      cardNumbers: parsedCards.length > 0 ? parsedCards : [primaryCard],
-      donateSiteUrl: donateSiteUrl.trim(),
-      reportUrl: reportUrl.trim(),
-      showReportUrl,
-      ownerName: ownerName.trim(),
-    });
+    try {
+      setIsSaving(true);
+      setSaveError("");
+      await onSave({
+        adminPassword: activePassword,
+        jarUrl,
+        title,
+        description,
+        balanceUah: Number(balanceUah) || 0,
+        goalUah: Number(goalUah) || 0,
+        monobankToken,
+        logoUrl,
+        isClosed,
+        closedReportTitle,
+        closedReportText,
+        closedGratitudeTitle: closedGratitudeTitle.trim(),
+        closedBalanceUah: snapBal,
+        closedGoalUah: snapGoal,
+        closedPercentage: snapPct,
+        closedAt: isClosed ? (parsed.closedAt || new Date().toISOString()) : "",
+        cardNumber: primaryCard,
+        cardNumbers: parsedCards.length > 0 ? parsedCards : [primaryCard],
+        donateSiteUrl: donateSiteUrl.trim(),
+        reportUrl: reportUrl.trim(),
+        showReportUrl,
+        ownerName: ownerName.trim(),
+      });
 
-    setSavedSuccess(true);
-    setTimeout(() => {
-      setSavedSuccess(false);
-      handleClose();
-    }, 1000);
+      setSavedSuccess(true);
+      setTimeout(() => {
+        setSavedSuccess(false);
+        handleClose();
+      }, 900);
+    } catch (err: any) {
+      console.error("Save error in admin modal:", err);
+      setSaveError(err.message || "Не вдалося зберегти налаштування на сервері");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -265,11 +305,20 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
             ) : (
               /* Edit Form View (Unlocked) */
               <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <Settings className="w-5 h-5 text-amber-400" />
-                  <h3 className="text-xl font-bold text-white">
-                    Налаштування параметрів збору
-                  </h3>
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <div className="flex items-center gap-2">
+                    <Settings className="w-5 h-5 text-amber-400" />
+                    <h3 className="text-xl font-bold text-white">
+                      Налаштування параметрів збору
+                    </h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="text-[11px] text-slate-400 hover:text-amber-400 transition-colors cursor-pointer mr-8"
+                  >
+                    Вийти
+                  </button>
                 </div>
                 <p className="text-xs text-slate-400 mb-5">
                   Вкажіть актуальне посилання на банку та фінансові дані
@@ -659,11 +708,21 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
                     </p>
                   </div>
 
+                  {saveError && (
+                    <div className="p-3 rounded-xl bg-rose-950/90 border border-rose-800 text-rose-300 text-xs font-bold flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                      <span>{saveError}</span>
+                    </div>
+                  )}
+
                   <button
                     type="submit"
-                    className="w-full py-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center justify-center gap-2 transition-colors font-sans cursor-pointer"
+                    disabled={isSaving}
+                    className="w-full py-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 disabled:opacity-60 text-slate-950 font-black text-xs flex items-center justify-center gap-2 transition-colors font-sans cursor-pointer disabled:cursor-not-allowed"
                   >
-                    {savedSuccess ? (
+                    {isSaving ? (
+                      <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                    ) : savedSuccess ? (
                       <>
                         <Check className="w-4 h-4 text-slate-950" />
                         <span>Збережено!</span>

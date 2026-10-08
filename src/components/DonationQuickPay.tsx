@@ -17,14 +17,24 @@ export const DonationQuickPay: React.FC<DonationQuickPayProps> = ({ parsed, raw 
   const [copiedLink, setCopiedLink] = useState<boolean>(false);
   const [copiedCardIndex, setCopiedCardIndex] = useState<number | null>(null);
 
-  const cardsList: string[] = (parsed.cardNumbers && parsed.cardNumbers.length > 0)
+  const rawSingleCard = (parsed.cardNumber || raw?.cardNumber || "").trim();
+  const rawListCards = (parsed.cardNumbers && parsed.cardNumbers.length > 0)
     ? parsed.cardNumbers
     : (raw?.cardNumbers && raw.cardNumbers.length > 0)
       ? raw.cardNumbers
-      : (parsed.cardNumber || raw?.cardNumber || "4874 1000 3205 4507")
-        .split(/[\n,]+/)
-        .map((s) => s.trim())
-        .filter(Boolean);
+      : [];
+
+  const cardsList: string[] = (() => {
+    if (rawSingleCard && rawListCards.length > 0) {
+      if (rawSingleCard !== rawListCards[0]) {
+        return [rawSingleCard, ...rawListCards.filter((c) => c !== rawSingleCard && c !== rawListCards[0])];
+      }
+      return rawListCards;
+    }
+    if (rawListCards.length > 0) return rawListCards;
+    if (rawSingleCard) return [rawSingleCard];
+    return ["4874 1000 3205 4507"];
+  })();
 
   const formatCard = (num: string) => {
     const rawDigits = num.replace(/\s+/g, "");
