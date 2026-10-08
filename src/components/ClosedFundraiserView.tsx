@@ -14,6 +14,7 @@ import {
   HeartHandshake,
 } from "lucide-react";
 import { ParsedMonobankData, RawMonobankResponse } from "../types";
+import { StyledText } from "./StyledText";
 
 interface ClosedFundraiserViewProps {
   parsed: ParsedMonobankData;
@@ -46,7 +47,7 @@ export const ClosedFundraiserView: React.FC<ClosedFundraiserViewProps> = ({
   const gratitudeText =
     parsed.closedReportText ||
     raw.closedReportText ||
-    "Щиро дякуємо кожному за участь у зборі, за кожен донат, репост та слова підтримки! Завдяки вашій неймовірній небайдужості цей збір закрито. Ви — справжній щит і надійний тил наших захисників! Разом до перемоги! 🇺🇦";
+    "Щиро дякуємо кожному за участь у зборі, за кожен донат, репост та слова підтримки! Завдяки вашій неймовірній небайдужості цей **збір закрито**. Ви — справжній щит і **надійний тил** наших захисників! Разом до перемоги! 🇺🇦";
 
   // Exact figures captured at the moment of closing
   const finalBalance = parsed.closedBalanceUah || raw.closedBalanceUah || parsed.balanceUah;
@@ -116,8 +117,8 @@ export const ClosedFundraiserView: React.FC<ClosedFundraiserViewProps> = ({
             Дякуємо за допомогу!
           </h1>
 
-          <div className="text-base sm:text-xl md:text-2xl font-bold text-slate-200 leading-relaxed font-sans whitespace-pre-line tracking-normal">
-            {gratitudeText}
+          <div className="text-base sm:text-xl md:text-2xl font-bold text-slate-200 leading-relaxed font-sans tracking-normal">
+            <StyledText text={gratitudeText} />
           </div>
         </motion.div>
 
@@ -150,7 +151,7 @@ export const ClosedFundraiserView: React.FC<ClosedFundraiserViewProps> = ({
                   Отримувач:
                 </span>
                 <span className="text-xs font-semibold text-slate-300 block truncate max-w-[170px] sm:max-w-none">
-                  {raw.ownerName || "Кривий Ріг Оповіщення / Сергій К."}
+                  {raw.ownerName || "Артем Г."}
                 </span>
               </div>
             </div>

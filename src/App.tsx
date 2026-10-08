@@ -4,6 +4,7 @@ import { FileText, Share2 } from "lucide-react";
 import { LogoHeader } from "./components/LogoHeader";
 import { ProgressSection } from "./components/ProgressSection";
 import { ClosedFundraiserView } from "./components/ClosedFundraiserView";
+import { StyledText } from "./components/StyledText";
 import { DonationTicker } from "./components/DonationTicker";
 import { EquipmentMatrix } from "./components/EquipmentMatrix";
 import { SocialShareSection } from "./components/SocialShareSection";
@@ -28,11 +29,11 @@ const DEFAULT_JAR_DATA: MonobankApiResponse = {
 🎯 Мета збору: придбати якісний аналізатор частот («Щезник 4М», «Чуйка», «Хантер 3» або аналог) — залежно від зібраної суми.
 ⚡️ Від себе: команда адмінів уже вклала перші кошти, щоб запустити збір.
 
-Якщо ви не маєте змоги підтримати гривнею — дуже просимо про максимальний розголос та репост. Кожна гривня та кожен вашій пошир — це реальний шанс захистити розвідників на передку. Разом до перемоги! 🇺🇦`,
+Якщо ви не маєте змоги підтримати гривнею — дуже просимо про максимальний розголос та репост. Кожна гривня та кожен ваш пошир — це реальний шанс захистити розвідників на передку. Разом до перемоги! 🇺🇦`,
     currencyCode: 980,
     balance: 1952499,
     goal: 4500000,
-    ownerName: "Сергій К. (Кривий Ріг Оповіщення / АЛЕРТС)",
+    ownerName: "Артем Г.",
     updatedAt: new Date().toISOString(),
   },
   parsed: {
@@ -44,7 +45,7 @@ const DEFAULT_JAR_DATA: MonobankApiResponse = {
 🎯 Мета збору: придбати якісний аналізатор частот («Щезник 4М», «Чуйка», «Хантер 3» або аналог) — залежно від зібраної суми.
 ⚡️ Від себе: команда адмінів уже вклала перші кошти, щоб запустити збір.
 
-Якщо ви не маєте змоги підтримати гривнею — дуже просимо про максимальний розголос та репост. Кожна гривня та кожен вашій пошир — це реальний шанс захистити розвідників на передку. Разом до перемоги! 🇺🇦`,
+Якщо ви не маєте змоги підтримати гривнею — дуже просимо про максимальний розголос та репост. Кожна гривня та кожен ваш пошир — це реальний шанс захистити розвідників на передку. Разом до перемоги! 🇺🇦`,
     balanceUah: 19525,
     goalUah: 45000,
     currency: "UAH",
@@ -179,6 +180,7 @@ export default function App() {
         closedPercentage: snapPct,
         cardNumber: updatedFields.cardNumber !== undefined ? updatedFields.cardNumber : monoApiResponse.rawMonobankResponse.cardNumber,
         donateSiteUrl: updatedFields.donateSiteUrl !== undefined ? updatedFields.donateSiteUrl : monoApiResponse.rawMonobankResponse.donateSiteUrl,
+        ownerName: updatedFields.ownerName !== undefined ? updatedFields.ownerName : monoApiResponse.rawMonobankResponse.ownerName,
       },
       parsed: {
         ...monoApiResponse.parsed,
@@ -199,6 +201,7 @@ export default function App() {
         closedPercentage: snapPct,
         cardNumber: updatedFields.cardNumber !== undefined ? updatedFields.cardNumber : monoApiResponse.parsed.cardNumber,
         donateSiteUrl: updatedFields.donateSiteUrl !== undefined ? updatedFields.donateSiteUrl : monoApiResponse.parsed.donateSiteUrl,
+        ownerName: updatedFields.ownerName !== undefined ? updatedFields.ownerName : monoApiResponse.parsed.ownerName,
       },
     };
 
@@ -288,8 +291,8 @@ export default function App() {
             </div>
           </div>
 
-          <div className="text-slate-200 text-sm sm:text-base whitespace-pre-line leading-relaxed font-sans">
-            {parsed.description}
+          <div className="text-slate-200 text-sm sm:text-base leading-relaxed font-sans">
+            <StyledText text={parsed.description} />
           </div>
         </section>
 

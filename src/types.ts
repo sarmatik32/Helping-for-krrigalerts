@@ -38,6 +38,7 @@ export interface ParsedMonobankData {
   closedPercentage?: number;
   cardNumber?: string;
   donateSiteUrl?: string;
+  ownerName?: string;
 }
 
 export interface DonationItem {

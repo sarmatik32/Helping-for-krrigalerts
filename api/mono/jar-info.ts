@@ -44,12 +44,12 @@ function getInitialConfig() {
 🎯 Мета збору: придбати якісний аналізатор частот («Щезник 4М», «Чуйка», «Хантер 3» або аналог) — залежно від зібраної суми.
 ⚡️ Від себе: команда адмінів уже вклала перші кошти, щоб запустити збір.
 
-Якщо ви не маєте змоги підтримати гривнею — дуже просимо про максимальний розголос та репост. Кожна гривня та кожен вашій пошир — це реальний шанс захистити розвідників на передку. Разом до перемоги! 🇺🇦`,
+Якщо ви не маєте змоги підтримати гривнею — дуже просимо про максимальний розголос та репост. Кожна гривня та кожен ваш пошир — це реальний шанс захистити розвідників на передку. Разом до перемоги! 🇺🇦`,
     currencyCode: 980,
     currencyName: "UAH",
     balance: 1952499,
     goal: 4500000,
-    ownerName: "Сергій К. (Кривий Ріг Оповіщення / АЛЕРТС)",
+    ownerName: "Артем Г.",
     monobankToken: "",
     logoUrl: "/logo.png",
     isClosed: false,
@@ -88,7 +88,7 @@ export default async function handler(req: any, res: any) {
   let balanceKopecks = config.balance ?? 1952499;
   let goalKopecks = config.goal ?? 4500000;
   let jarTitle = config.title || "На РЕБ";
-  let ownerName = config.ownerName || "Сергій К. (Кривий Ріг Оповіщення / АЛЕРТС)";
+  let ownerName = config.ownerName || "Артем Г.";
   let fullDescription = config.description || "";
   let apiStatusMsg = token ? "Синхронізовано з Monobank API" : "Використовуються актуальні збережені дані";
   let donations: any[] = cachedJarState?.donations || config.donations || [];

@@ -29,12 +29,12 @@ let jarApiState = {
 🎯 Мета збору: придбати якісний аналізатор частот («Щезник 4М», «Чуйка», «Хантер 3» або аналог) — залежно від зібраної суми.
 ⚡️ Від себе: команда адмінів уже вклала перші кошти, щоб запустити збір.
 
-Якщо ви не маєте змоги підтримати гривнею — дуже просимо про максимальний розголос та репост. Кожна гривня та кожен вашій пошир — це реальний шанс захистити розвідників на передку. Разом до перемоги! 🇺🇦`,
+Якщо ви не маєте змоги підтримати гривнею — дуже просимо про максимальний розголос та репост. Кожна гривня та кожен ваш пошир — це реальний шанс захистити розвідників на передку. Разом до перемоги! 🇺🇦`,
   currencyCode: 980,
   currencyName: "UAH",
   balance: 1952499, // in kopecks (19,524.99 UAH)
   goal: 4500000,    // in kopecks (45,000.00 UAH)
-  ownerName: "Сергій К. (Кривий Ріг Оповіщення / АЛЕРТС)",
+  ownerName: "Артем Г.",
   monobankToken: "",
   logoUrl: "/logo.png",
   isClosed: false,
@@ -256,7 +256,7 @@ app.get("/api/mono/jar-info", async (req, res) => {
 
 // API: Update Monobank Jar settings
 app.post("/api/mono/jar-update", (req, res) => {
-  const { adminPassword, jarId, jarUrl, title, description, balanceUah, goalUah, monobankToken, logoUrl, isClosed, closedAt, closedReportTitle, closedReportText, closedBalanceUah, closedGoalUah, closedPercentage, cardNumber, donateSiteUrl } = req.body;
+  const { adminPassword, jarId, jarUrl, title, description, balanceUah, goalUah, monobankToken, logoUrl, isClosed, closedAt, closedReportTitle, closedReportText, closedBalanceUah, closedGoalUah, closedPercentage, cardNumber, donateSiteUrl, ownerName } = req.body;
 
   const inputHash = crypto.createHash("sha256").update(String(adminPassword || "")).digest("hex");
   const envHash = process.env.ADMIN_PASSWORD_HASH;
@@ -302,6 +302,7 @@ app.post("/api/mono/jar-update", (req, res) => {
   else if (isClosed && !(jarApiState as any).closedPercentage) (jarApiState as any).closedPercentage = Math.round(((jarApiState.balance / 100) / (jarApiState.goal / 100 || 1)) * 100);
   if (cardNumber !== undefined) (jarApiState as any).cardNumber = cardNumber.trim();
   if (donateSiteUrl !== undefined) (jarApiState as any).donateSiteUrl = donateSiteUrl.trim();
+  if (ownerName !== undefined && ownerName.trim() !== "") jarApiState.ownerName = ownerName.trim();
   jarApiState.updatedAt = new Date().toISOString();
 
   saveConfig();

@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Settings, Save, X, Key, Check, Lock, ShieldAlert, CheckCircle2, Award, Calendar, AlertCircle } from "lucide-react";
+import { Settings, Save, X, Key, Check, Lock, ShieldAlert, CheckCircle2, Award, Calendar, AlertCircle, Type, Sparkles } from "lucide-react";
 import { RawMonobankResponse, ParsedMonobankData } from "../types";
+import { StyledText } from "./StyledText";
 
 interface AdminSettingsModalProps {
   parsed: ParsedMonobankData;
@@ -25,6 +26,7 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
   const [jarUrl, setJarUrl] = useState(parsed.jarUrl);
   const [title, setTitle] = useState(raw.title);
   const [description, setDescription] = useState(raw.description);
+  const [ownerName, setOwnerName] = useState(raw.ownerName || "Артем Г.");
   const [balanceUah, setBalanceUah] = useState(parsed.balanceUah.toString());
   const [goalUah, setGoalUah] = useState(parsed.goalUah.toString());
   const [monobankToken, setMonobankToken] = useState("");
@@ -50,6 +52,25 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
     parsed.donateSiteUrl || raw.donateSiteUrl || "https://donate.krrigalerts.pp.ua/"
   );
   const [savedSuccess, setSavedSuccess] = useState(false);
+
+  const insertFormatting = (prefix: string, suffix: string = prefix, placeholder: string = "слово") => {
+    const textarea = document.getElementById("closedReportTextarea") as HTMLTextAreaElement | null;
+    if (!textarea) {
+      setClosedReportText((prev) => (prev ? `${prev} ${prefix}${placeholder}${suffix}` : `${prefix}${placeholder}${suffix}`));
+      return;
+    }
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    const selectedText = text.substring(start, end) || placeholder;
+    const replacement = `${prefix}${selectedText}${suffix}`;
+    const newText = text.substring(0, start) + replacement + text.substring(end);
+    setClosedReportText(newText);
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + prefix.length, start + prefix.length + selectedText.length);
+    }, 40);
+  };
 
   const handlePasswordSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,6 +112,7 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
       closedAt: isClosed ? (parsed.closedAt || new Date().toISOString()) : "",
       cardNumber: cardNumber.trim(),
       donateSiteUrl: donateSiteUrl.trim(),
+      ownerName: ownerName.trim(),
     });
 
     setSavedSuccess(true);
@@ -233,7 +255,7 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
                             onClick={() => {
                               setClosedReportTitle("Збір успішно завершено! Мета досягнута! 🎯");
                               setClosedReportText(
-                                "Щиро дякуємо кожному, хто підтримав наш збір коштами, репостами та теплими словами! Завдяки вашій неймовірній небайдужості збір закрито. Вся сума спрямовується на закупівлю необхідного обладнання для розвідроти на Слов'янському напрямку. Ви — неймовірна сила і надійний тил наших воїнів! Разом до перемоги! 🇺🇦"
+                                "Щиро дякуємо кожному, хто підтримав наш збір коштами, репостами та теплими словами! Завдяки вашій неймовірній небайдужості **збір закрито**. Вся сума спрямовується на закупівлю необхідного обладнання для розвідроти на Слов'янському напрямку. Ви — неймовірна сила і **надійний тил наших воїнів**! Разом до перемоги! 🇺🇦"
                               );
                             }}
                             className="text-[10px] text-amber-400 hover:text-amber-300 underline cursor-pointer"
@@ -243,16 +265,82 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
                         </div>
 
                         <div>
-                          <label className="text-slate-300 font-semibold block mb-1">
-                            Великий напис про дякування (відобразиться по центру сайту):
-                          </label>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <label className="text-slate-300 font-semibold block text-xs">
+                              Повідомлення / подяка (відобразиться по центру сайту):
+                            </label>
+                            <span className="text-[10px] font-mono text-amber-400/90 flex items-center gap-1">
+                              <Sparkles className="w-3 h-3 text-amber-400" />
+                              Стилізація слів
+                            </span>
+                          </div>
+
+                          {/* Quick formatting toolbar */}
+                          <div className="flex flex-wrap items-center gap-1.5 mb-2 p-1.5 bg-slate-950/80 rounded-lg border border-slate-800">
+                            <span className="text-[10px] font-mono text-slate-400 px-1">Виділити:</span>
+                            <button
+                              type="button"
+                              onClick={() => insertFormatting("**", "**", "жирне")}
+                              className="px-2 py-0.5 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-[11px] font-bold border border-amber-500/40 transition-colors"
+                              title="Жирне золоте сяйво"
+                            >
+                              **Жирне**
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => insertFormatting("==", "==", "акцент")}
+                              className="px-2 py-0.5 rounded bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-300 text-[11px] font-bold border border-yellow-500/40 transition-colors"
+                              title="Жовтий бейдж-маркер"
+                            >
+                              ==Бейдж==
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => insertFormatting("[cyan]", "[/cyan]", "блакитне")}
+                              className="px-2 py-0.5 rounded bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 text-[11px] font-bold border border-cyan-500/40 transition-colors"
+                              title="Блакитний акцент"
+                            >
+                              [cyan]
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => insertFormatting("[green]", "[/green]", "зелене")}
+                              className="px-2 py-0.5 rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-[11px] font-bold border border-emerald-500/40 transition-colors"
+                              title="Зелений акцент"
+                            >
+                              [green]
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => insertFormatting("*", "*", "курсив")}
+                              className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] italic border border-slate-700 transition-colors"
+                              title="Курсив"
+                            >
+                              *Курсив*
+                            </button>
+                          </div>
+
                           <textarea
+                            id="closedReportTextarea"
                             rows={4}
                             value={closedReportText}
                             onChange={(e) => setClosedReportText(e.target.value)}
-                            placeholder="Напишіть слова щирої подяки учасникам збору..."
+                            placeholder="Напишіть слова щирої подяки учасникам збору (використовуйте **слово** або ==слово== для виділення)..."
                             className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-500 leading-relaxed font-sans text-sm"
                           />
+
+                          {/* Live preview of styled words */}
+                          {closedReportText && (
+                            <div className="mt-2 p-2.5 bg-slate-950/80 border border-slate-800/90 rounded-lg">
+                              <span className="text-[10px] font-mono text-slate-400 block mb-1 uppercase tracking-wider font-semibold flex items-center gap-1">
+                                <Sparkles className="w-3 h-3 text-amber-400" />
+                                Попередній перегляд виділення:
+                              </span>
+                              <div className="text-xs sm:text-sm font-medium text-slate-200">
+                                <StyledText text={closedReportText} />
+                              </div>
+                            </div>
+                          )}
                         </div>
 
                         <div className="grid grid-cols-2 gap-3 pt-2">
@@ -334,6 +422,19 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
                       type="text"
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-amber-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-slate-300 font-bold block mb-1">
+                      Отримувач / Автор збору
+                    </label>
+                    <input
+                      type="text"
+                      value={ownerName}
+                      onChange={(e) => setOwnerName(e.target.value)}
+                      placeholder="Артем Г."
                       className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-amber-500"
                     />
                   </div>

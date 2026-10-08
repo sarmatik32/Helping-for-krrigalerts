@@ -39,6 +39,7 @@ export default async function handler(req: any, res: any) {
     closedPercentage,
     cardNumber,
     donateSiteUrl,
+    ownerName,
   } = req.body || {};
 
   const inputHash = crypto.createHash("sha256").update(String(adminPassword || "")).digest("hex");
@@ -83,6 +84,7 @@ export default async function handler(req: any, res: any) {
       closedPercentage: closedPercentage !== undefined ? Number(closedPercentage) : currentConfig.closedPercentage,
       cardNumber: cardNumber !== undefined ? cardNumber : currentConfig.cardNumber,
       donateSiteUrl: donateSiteUrl !== undefined ? donateSiteUrl : currentConfig.donateSiteUrl,
+      ownerName: ownerName !== undefined ? ownerName : currentConfig.ownerName,
       updatedAt: new Date().toISOString(),
     };
 
