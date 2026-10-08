@@ -43,6 +43,12 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
   const [closedGoalUah, setClosedGoalUah] = useState<string>(
     (parsed.closedGoalUah || parsed.goalUah || "").toString()
   );
+  const [cardNumber, setCardNumber] = useState<string>(
+    parsed.cardNumber || raw.cardNumber || "4874 1000 3205 4507"
+  );
+  const [donateSiteUrl, setDonateSiteUrl] = useState<string>(
+    parsed.donateSiteUrl || raw.donateSiteUrl || "https://donate.krrigalerts.pp.ua/"
+  );
   const [savedSuccess, setSavedSuccess] = useState(false);
 
   const handlePasswordSubmit = (e: React.FormEvent) => {
@@ -83,6 +89,8 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
       closedGoalUah: snapGoal,
       closedPercentage: snapPct,
       closedAt: isClosed ? (parsed.closedAt || new Date().toISOString()) : "",
+      cardNumber: cardNumber.trim(),
+      donateSiteUrl: donateSiteUrl.trim(),
     });
 
     setSavedSuccess(true);
@@ -270,6 +278,34 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
                               onChange={(e) => setClosedGoalUah(e.target.value)}
                               placeholder={goalUah}
                               className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white font-mono focus:outline-none focus:border-amber-500"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-3 pt-2 border-t border-slate-800/80">
+                          <div>
+                            <label className="text-slate-300 font-semibold block mb-1 text-xs">
+                              Номер карти Monobank для донатів (з можливістю копіювання):
+                            </label>
+                            <input
+                              type="text"
+                              value={cardNumber}
+                              onChange={(e) => setCardNumber(e.target.value)}
+                              placeholder="4874 1000 3205 4507"
+                              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white font-mono text-xs focus:outline-none focus:border-amber-500"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-slate-300 font-semibold block mb-1 text-xs">
+                              Посилання для кнопки переходу на сайт донатів:
+                            </label>
+                            <input
+                              type="text"
+                              value={donateSiteUrl}
+                              onChange={(e) => setDonateSiteUrl(e.target.value)}
+                              placeholder="https://donate.krrigalerts.pp.ua/"
+                              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white font-mono text-xs focus:outline-none focus:border-amber-500"
                             />
                           </div>
                         </div>

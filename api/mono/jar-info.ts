@@ -239,6 +239,8 @@ export default async function handler(req: any, res: any) {
       closedBalanceUah: config.closedBalanceUah || balanceUah,
       closedGoalUah: config.closedGoalUah || goalUah,
       closedPercentage: config.closedPercentage || percentage,
+      cardNumber: config.cardNumber || "4874 1000 3205 4507",
+      donateSiteUrl: config.donateSiteUrl || "https://donate.krrigalerts.pp.ua/",
     },
     parsed: {
       jarUrl: `https://send.monobank.ua/jar/${jarSendId}`,
@@ -257,6 +259,8 @@ export default async function handler(req: any, res: any) {
       closedBalanceUah: config.closedBalanceUah || balanceUah,
       closedGoalUah: config.closedGoalUah || goalUah,
       closedPercentage: config.closedPercentage || percentage,
+      cardNumber: config.cardNumber || "4874 1000 3205 4507",
+      donateSiteUrl: config.donateSiteUrl || "https://donate.krrigalerts.pp.ua/",
     },
     donations,
   });

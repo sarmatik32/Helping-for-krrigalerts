@@ -223,6 +223,8 @@ app.get("/api/mono/jar-info", async (req, res) => {
         closedBalanceUah: (jarApiState as any).closedBalanceUah || balanceUah,
         closedGoalUah: (jarApiState as any).closedGoalUah || goalUah,
         closedPercentage: (jarApiState as any).closedPercentage || Math.min(100, Math.round((balanceUah / (goalUah || 1)) * 100)),
+        cardNumber: (jarApiState as any).cardNumber || "4874 1000 3205 4507",
+        donateSiteUrl: (jarApiState as any).donateSiteUrl || "https://donate.krrigalerts.pp.ua/",
       },
       parsed: {
         jarUrl: jarApiState.jarUrl,
@@ -241,6 +243,8 @@ app.get("/api/mono/jar-info", async (req, res) => {
         closedBalanceUah: (jarApiState as any).closedBalanceUah || balanceUah,
         closedGoalUah: (jarApiState as any).closedGoalUah || goalUah,
         closedPercentage: (jarApiState as any).closedPercentage || Math.min(100, Math.round((balanceUah / (goalUah || 1)) * 100)),
+        cardNumber: (jarApiState as any).cardNumber || "4874 1000 3205 4507",
+        donateSiteUrl: (jarApiState as any).donateSiteUrl || "https://donate.krrigalerts.pp.ua/",
       },
       donations: recentDonations
     });
@@ -252,7 +256,7 @@ app.get("/api/mono/jar-info", async (req, res) => {
 
 // API: Update Monobank Jar settings
 app.post("/api/mono/jar-update", (req, res) => {
-  const { adminPassword, jarId, jarUrl, title, description, balanceUah, goalUah, monobankToken, logoUrl, isClosed, closedAt, closedReportTitle, closedReportText, closedBalanceUah, closedGoalUah, closedPercentage } = req.body;
+  const { adminPassword, jarId, jarUrl, title, description, balanceUah, goalUah, monobankToken, logoUrl, isClosed, closedAt, closedReportTitle, closedReportText, closedBalanceUah, closedGoalUah, closedPercentage, cardNumber, donateSiteUrl } = req.body;
 
   const inputHash = crypto.createHash("sha256").update(String(adminPassword || "")).digest("hex");
   const envHash = process.env.ADMIN_PASSWORD_HASH;
@@ -296,6 +300,8 @@ app.post("/api/mono/jar-update", (req, res) => {
   else if (isClosed && !(jarApiState as any).closedGoalUah) (jarApiState as any).closedGoalUah = Math.round(jarApiState.goal / 100);
   if (closedPercentage !== undefined) (jarApiState as any).closedPercentage = Number(closedPercentage);
   else if (isClosed && !(jarApiState as any).closedPercentage) (jarApiState as any).closedPercentage = Math.round(((jarApiState.balance / 100) / (jarApiState.goal / 100 || 1)) * 100);
+  if (cardNumber !== undefined) (jarApiState as any).cardNumber = cardNumber.trim();
+  if (donateSiteUrl !== undefined) (jarApiState as any).donateSiteUrl = donateSiteUrl.trim();
   jarApiState.updatedAt = new Date().toISOString();
 
   saveConfig();

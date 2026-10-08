@@ -177,6 +177,8 @@ export default function App() {
         closedBalanceUah: snapBal,
         closedGoalUah: snapGoal,
         closedPercentage: snapPct,
+        cardNumber: updatedFields.cardNumber !== undefined ? updatedFields.cardNumber : monoApiResponse.rawMonobankResponse.cardNumber,
+        donateSiteUrl: updatedFields.donateSiteUrl !== undefined ? updatedFields.donateSiteUrl : monoApiResponse.rawMonobankResponse.donateSiteUrl,
       },
       parsed: {
         ...monoApiResponse.parsed,
@@ -195,6 +197,8 @@ export default function App() {
         closedBalanceUah: snapBal,
         closedGoalUah: snapGoal,
         closedPercentage: snapPct,
+        cardNumber: updatedFields.cardNumber !== undefined ? updatedFields.cardNumber : monoApiResponse.parsed.cardNumber,
+        donateSiteUrl: updatedFields.donateSiteUrl !== undefined ? updatedFields.donateSiteUrl : monoApiResponse.parsed.donateSiteUrl,
       },
     };
 

@@ -15,6 +15,8 @@ export interface RawMonobankResponse {
   closedBalanceUah?: number;
   closedGoalUah?: number;
   closedPercentage?: number;
+  cardNumber?: string;
+  donateSiteUrl?: string;
 }
 
 export interface ParsedMonobankData {
@@ -34,6 +36,8 @@ export interface ParsedMonobankData {
   closedBalanceUah?: number;
   closedGoalUah?: number;
   closedPercentage?: number;
+  cardNumber?: string;
+  donateSiteUrl?: string;
 }
 
 export interface DonationItem {
